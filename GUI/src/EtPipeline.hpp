@@ -8,7 +8,6 @@ namespace et{
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
         VkViewport viewport;
         VkRect2D scissor;
-        VkPipelineViewportStateCreateInfo viewportInfo;
         VkPipelineRasterizationStateCreateInfo rasterizationInfo;
         VkPipelineMultisampleStateCreateInfo multisampleInfo;
         VkPipelineColorBlendAttachmentState colorBlendAttachment;
@@ -24,6 +23,7 @@ namespace et{
         ~EtPipeline();
         EtPipeline(const EtPipeline&) = delete;
         void operator=(const EtPipeline&) = delete;
+        void bind(VkCommandBuffer commandBuffer);
         static PipelineConfigInfo defultPipelineConfigInfo(uint32_t width, uint32_t height);
         private:
         static std::vector<char> readFile(const std::string& filepath);
