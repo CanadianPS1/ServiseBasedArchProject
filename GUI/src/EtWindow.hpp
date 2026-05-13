@@ -8,6 +8,7 @@ namespace et{
         EtWindow(int w, int h, std::string name);
         ~EtWindow();
         bool shouldClose(){return glfwWindowShouldClose(window);}
+        void createWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
         private:
         void initWindow();
         const int width;

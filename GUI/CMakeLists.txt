@@ -7,6 +7,7 @@ find_package(glfw3 REQUIRED)
 file(GLOB_RECURSE SOURCE_FILES
     "src/*.c++"
     "src/*.hpp"
+    "src/*.cpp"
 )
 add_executable(ET ${SOURCE_FILES})
 target_include_directories(ET
