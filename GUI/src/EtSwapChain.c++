@@ -6,12 +6,19 @@
 #include <cstring>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <set>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
 namespace et{
-    EtSwapChain::EtSwapChain(EtDevice &deviceRef, VkExtent2D extent) : device{deviceRef}, windowExtent{extent} {
+    EtSwapChain::EtSwapChain(EtDevice &deviceRef, VkExtent2D extent) : device{deviceRef}, windowExtent{extent}{init();}
+    EtSwapChain::EtSwapChain(EtDevice &deviceRef, VkExtent2D extent, std::shared_ptr<EtSwapChain> previous) : device{deviceRef}, 
+    windowExtent{extent}, oldSwapChain{previous}{
+        init();
+        oldSwapChain = nullptr;
+    }
+    void EtSwapChain::init(){
         createSwapChain();
         createImageViews();
         createRenderPass();
@@ -106,7 +113,7 @@ namespace et{
         createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
         createInfo.presentMode = presentMode;
         createInfo.clipped = VK_TRUE;
-        createInfo.oldSwapchain = VK_NULL_HANDLE;
+        createInfo.oldSwapchain = oldSwapChain == nullptr ? VK_NULL_HANDLE : oldSwapChain->swapChain;
         if (vkCreateSwapchainKHR(device.device(), &createInfo, nullptr, &swapChain) != VK_SUCCESS) 
             throw std::runtime_error("failed to create swap chain!");
         // we only specified a minimum number of images in the swap chain, so the implementation is
@@ -259,7 +266,7 @@ namespace et{
     }
     VkSurfaceFormatKHR EtSwapChain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats){
         for(const auto &availableFormat : availableFormats){
-            if(availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM &&
+            if(availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
                 availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                 return availableFormat;
             }

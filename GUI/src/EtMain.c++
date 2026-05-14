@@ -1,4 +1,5 @@
 #include "EtMain.hpp"
+#include "EtPipeline.hpp"
 #include "EtSwapChain.hpp"
 #include <GLFW/glfw3.h>
 #include <memory>
@@ -8,8 +9,9 @@
 #include <stdexcept>
 namespace et{
     EtMain::EtMain(){
+        loadModels();
         createPipelineLayout();
-        createPipeline();
+        recreateSwapChain();
         createCommandBuffers();
     }
     EtMain::~EtMain(){vkDestroyPipelineLayout(etDevice.device(), pipelineLayout, nullptr);}
@@ -18,6 +20,7 @@ namespace et{
             glfwPollEvents();
             drawFrame();
         }
+        vkDeviceWaitIdle(etDevice.device());
     }
     void EtMain::createPipelineLayout(){
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -30,8 +33,11 @@ namespace et{
             throw std::runtime_error("failed to create pipeline layout");
     }
     void EtMain::createPipeline(){
-        auto pipelineConfig = EtPipeline::defultPipelineConfigInfo(etSwapChain.width(), etSwapChain.height());
-        pipelineConfig.renderPass = etSwapChain.getRenderPass();
+        assert(etSwapChain != nullptr && "Cannot create pipeline before swap chain");
+        assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
+        PipelineConfigInfo pipelineConfig{};
+        EtPipeline::defultPipelineConfigInfo(pipelineConfig);
+        pipelineConfig.renderPass = etSwapChain->getRenderPass();
         pipelineConfig.pipelineLayout = pipelineLayout;
         etPipeline = std::make_unique<EtPipeline>(
             etDevice,
@@ -41,7 +47,7 @@ namespace et{
         );
     }
     void EtMain::createCommandBuffers(){
-        commandBuffers.resize(etSwapChain.imageCount());
+        commandBuffers.resize(etSwapChain->imageCount());
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -49,38 +55,88 @@ namespace et{
         allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
         if(vkAllocateCommandBuffers(etDevice.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
             throw std::runtime_error("failed to allocate command buffers");
-        for(int i = 0; i < commandBuffers.size(); i++){
-            VkCommandBufferBeginInfo beginInfo{};
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            if(vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS)
-                throw std::runtime_error("failed to begin recording command buffer");
-            VkRenderPassBeginInfo renderPassInfo{};
-            renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            renderPassInfo.renderPass = etSwapChain.getRenderPass();
-            renderPassInfo.framebuffer = etSwapChain.getFrameBuffer(i);
-            renderPassInfo.renderArea.offset = {0,0};
-            renderPassInfo.renderArea.extent = etSwapChain.getSwapChainExtent();
-
-            std::array<VkClearValue, 2> clearValues{};
-            clearValues[0].color = {0.1f, 0.1f, 0.1f, 1.0f};
-            clearValues[1].depthStencil = {1.0f, 0};
-            renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-            renderPassInfo.pClearValues = clearValues.data();
-            vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-            etPipeline->bind(commandBuffers[i]);
-            vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
-            vkCmdEndRenderPass(commandBuffers[i]);
-            if(vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS)
-                throw std::runtime_error("failed to crecord command buffer");
-        }
     }   
     void EtMain::drawFrame(){
         uint32_t imageIndex;
-        auto result = etSwapChain.acquireNextImage(&imageIndex);
+        auto result = etSwapChain->acquireNextImage(&imageIndex);
+        if(result == VK_ERROR_OUT_OF_DATE_KHR){
+            recreateSwapChain();
+            return;
+        }
         if(result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
             throw std::runtime_error("failed to aquire swap chain image");
-        result = etSwapChain.submitCommandBuffers(&commandBuffers[imageIndex],&imageIndex);
-        // if(result != VK_SUCCESS)
-        //     throw std::runtime_error("failed to present swap chain image");
+        recordCommandBuffer(imageIndex);
+        result = etSwapChain->submitCommandBuffers(&commandBuffers[imageIndex],&imageIndex);
+        if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || etWindow.wasWindowResized()){
+            etWindow.resetWindowResizedFlag();
+            recreateSwapChain();
+            return;
+        }
+        if(result != VK_SUCCESS)
+            throw std::runtime_error("failed to present swap chain image");
+    }
+    void EtMain::loadModels(){
+        std::vector<EtModel::Vertex> vertices{
+            {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+            {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+            {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+        };
+        etModel = std::make_unique<EtModel>(etDevice, vertices);
+    }
+    void EtMain::recordCommandBuffer(int imageIndex){
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        if(vkBeginCommandBuffer(commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS)
+            throw std::runtime_error("failed to begin recording command buffer");
+        VkRenderPassBeginInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassInfo.renderPass = etSwapChain->getRenderPass();
+        renderPassInfo.framebuffer = etSwapChain->getFrameBuffer(imageIndex);
+        renderPassInfo.renderArea.offset = {0,0};
+        renderPassInfo.renderArea.extent = etSwapChain->getSwapChainExtent();
+
+        std::array<VkClearValue, 2> clearValues{};
+        clearValues[0].color = {0.1f, 0.1f, 0.1f, 1.0f};
+        clearValues[1].depthStencil = {1.0f, 0};
+        renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+        renderPassInfo.pClearValues = clearValues.data();
+        vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        VkViewport viewport{};
+        viewport.x = 0.0f;
+        viewport.y = 0.0f;
+        viewport.width = static_cast<float>(etSwapChain->getSwapChainExtent().width);
+        viewport.height = static_cast<float>(etSwapChain->getSwapChainExtent().height);
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+        VkRect2D scissor{{0,0}, etSwapChain->getSwapChainExtent()};
+        vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &viewport);
+        vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &scissor);
+        etPipeline->bind(commandBuffers[imageIndex]);
+        etModel->bind(commandBuffers[imageIndex]);
+        etModel->draw(commandBuffers[imageIndex]);
+        vkCmdEndRenderPass(commandBuffers[imageIndex]);
+        if(vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS)
+            throw std::runtime_error("failed to crecord command buffer");
+    }
+    void EtMain::recreateSwapChain(){
+        auto extent = etWindow.getExtent();
+        while(extent.width == 0 || extent.height == 0){
+            extent = etWindow.getExtent();
+            glfwWaitEvents();
+        }
+        vkDeviceWaitIdle(etDevice.device());
+        if(etSwapChain == nullptr) etSwapChain = std::make_unique<EtSwapChain>(etDevice, extent);
+        else{ 
+            etSwapChain = std::make_unique<EtSwapChain>(etDevice, extent, std::move(etSwapChain));
+            if(etSwapChain->imageCount() != commandBuffers.size()){
+                freeCommandBuffers();
+                createCommandBuffers();
+            }
+        }
+        createPipeline();
+    }
+    void EtMain::freeCommandBuffers(){
+        vkFreeCommandBuffers(etDevice.device(), etDevice.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+        commandBuffers.clear();
     }
 }
