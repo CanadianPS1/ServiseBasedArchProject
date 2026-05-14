@@ -1,12 +1,10 @@
 #pragma once
 #include "EtWindow.hpp"
-#include "EtPipeline.hpp"
 #include "EtDevice.hpp"
-#include "EtSwapChain.hpp"
-#include <memory>
+#include "EtRenderer.hpp"
 #include <vector>
 #include <vulkan/vulkan_core.h>
-#include "EtModel.hpp"
+#include "EtGameObject.hpp"
 namespace et{
     class EtMain{
         public:
@@ -18,20 +16,10 @@ namespace et{
             EtMain &operator=(const EtMain &) = delete;
             void run();
         private:
-            void loadModels();
-            void createPipelineLayout();
-            void createPipeline();
-            void createCommandBuffers();
-            void freeCommandBuffers();
-            void drawFrame();
-            void recreateSwapChain();
-            void recordCommandBuffer(int imageIndex);
+            void loadGameObjects();
             EtWindow etWindow{WIDTH, HEIGHT, "ET: Extra Terestial"};
             EtDevice etDevice{etWindow};
-            std::unique_ptr<EtSwapChain> etSwapChain;
-            std::unique_ptr<EtPipeline> etPipeline;
-            VkPipelineLayout pipelineLayout;
-            std::vector<VkCommandBuffer> commandBuffers;
-            std::unique_ptr<EtModel> etModel;
+            EtRenderer etRenderer{etWindow, etDevice};
+            std::vector<EtGameObject> gameObjects;
     };
 }
