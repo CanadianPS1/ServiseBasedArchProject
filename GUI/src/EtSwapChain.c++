@@ -7,7 +7,6 @@
 #include <iostream>
 #include <limits>
 #include <memory>
-#include <set>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
@@ -70,7 +69,7 @@ namespace et{
         vkResetFences(device.device(), 1, &inFlightFences[currentFrame]);
         if(vkQueueSubmit(device.graphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) 
         throw std::runtime_error("failed to submit draw command buffer!");
-        VkPresentInfoKHR presentInfo = {};
+    VkPresentInfoKHR presentInfo = {};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = signalSemaphores;

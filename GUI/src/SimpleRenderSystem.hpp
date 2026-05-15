@@ -1,6 +1,7 @@
 #pragma once
 #include "EtPipeline.hpp"
 #include "EtDevice.hpp"
+#include "EtCamera.hpp"
 #include <memory>
 #include <vector>
 #include <vulkan/vulkan_core.h>
@@ -12,7 +13,7 @@ namespace et{
             ~SimpleRenderSystem();
             SimpleRenderSystem(const SimpleRenderSystem &) = delete;
             SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
-            void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<EtGameObject> &gameObjects);
+            void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<EtGameObject> &gameObjects, const EtCamera &camera);
         private:
             void createPipelineLayout();
             void createPipeline(VkRenderPass renderPass);

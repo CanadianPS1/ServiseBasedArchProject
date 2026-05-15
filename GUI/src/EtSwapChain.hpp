@@ -6,7 +6,6 @@
 #include <vulkan/vulkan.h>
 
 // std lib headers
-#include <string>
 #include <vector>
 #include <memory>
 namespace et {

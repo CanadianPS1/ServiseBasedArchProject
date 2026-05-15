@@ -8,6 +8,7 @@ file(GLOB_RECURSE SOURCE_FILES
     "src/*.c++"
     "src/*.hpp"
     "src/*.cpp"
+    "include/tiny_obj_loader.h"
 )
 add_executable(ET ${SOURCE_FILES})
 target_include_directories(ET

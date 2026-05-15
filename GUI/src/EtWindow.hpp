@@ -14,6 +14,7 @@ namespace et{
             void createWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
             bool wasWindowResized(){return frameBufferResized;}
             void resetWindowResizedFlag(){frameBufferResized = false;}
+            GLFWwindow *getGLFWwindow() const {return window;}
         private:
             static void frameBufferResizedCallBack(GLFWwindow *window, int width, int height);
             void initWindow();
