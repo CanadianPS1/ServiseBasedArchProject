@@ -10,13 +10,13 @@
 namespace et{
     class SimpleRenderSystem{
         public:
-            SimpleRenderSystem(EtDevice& device, VkRenderPass renderPass);
+            SimpleRenderSystem(EtDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
             ~SimpleRenderSystem();
             SimpleRenderSystem(const SimpleRenderSystem &) = delete;
             SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
             void renderGameObjects(std::vector<EtGameObject> &gameObjects, FrameInfo& frameInfo);
         private:
-            void createPipelineLayout();
+            void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
             void createPipeline(VkRenderPass renderPass);
             EtDevice& etDevice;
             std::unique_ptr<EtPipeline> etPipeline;

@@ -5,11 +5,8 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 #include "EtGameObject.hpp"
+#include "EtDescriptors.hpp"
 namespace et{
-    struct GlobalUbo{
-        glm::mat4 projectionView{1.f};
-        glm::vec3 lightDirection = glm::normalize(glm::vec3{1.f,-3.f,-1.f});
-    };
     class EtMain{
         public:
             static constexpr int WIDTH = 1400;
@@ -24,6 +21,7 @@ namespace et{
             EtWindow etWindow{WIDTH, HEIGHT, "ET: Extra Terestial"};
             EtDevice etDevice{etWindow};
             EtRenderer etRenderer{etWindow, etDevice};
+            std::unique_ptr<EtDescriptorPool> globalPool{};
             std::vector<EtGameObject> gameObjects;
     };
 }

@@ -1,3 +1,4 @@
+#include "EtDescriptors.hpp"
 #include "EtFrameInfo.hpp"
 #include "EtGameObject.hpp"
 #include "EtSwapChain.hpp"
@@ -15,7 +16,15 @@
 #include "EtCamera.hpp"
 #include <chrono>
 namespace et{
+    struct GlobalUbo{
+        glm::mat4 projectionView{1.f};
+        glm::vec3 lightDirection = glm::normalize(glm::vec3{1.f,-3.f,-1.f});
+    };
     EtMain::EtMain(){
+        globalPool = EtDescriptorPool::Builder(etDevice)
+            .setMaxSets(EtSwapChain::MAX_FRAMES_IN_FLIGHT)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, EtSwapChain::MAX_FRAMES_IN_FLIGHT)
+            .build();
         loadGameObjects();
     }
     EtMain::~EtMain(){}
@@ -26,7 +35,17 @@ namespace et{
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);  
             uboBuffers[i]->map();
         } 
-        SimpleRenderSystem simpleRenderSystem{etDevice, etRenderer.getSwapChainRenderPass()};
+        auto globalSetLayout = EtDescriptorSetLayout::Builder(etDevice)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+            .build();
+        std::vector<VkDescriptorSet> globalDescriptorSets(EtSwapChain::MAX_FRAMES_IN_FLIGHT);
+        for(int i = 0; i < globalDescriptorSets.size(); i++){
+            auto bufferInfo = uboBuffers[i]->descriptorInfo();
+            EtDescriptorWriter(*globalSetLayout, *globalPool)
+                .writeBuffer(0, &bufferInfo)
+                .build(globalDescriptorSets[i]);
+        }
+        SimpleRenderSystem simpleRenderSystem{etDevice, etRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
         EtCamera camera{};
         camera.setViewTarget(glm::vec3(-1.f, -2.f, 2.f), glm::vec3(0.f, 0.f, 2.5f));
         auto viewerObject = EtGameObject::createGameObject();
@@ -43,7 +62,7 @@ namespace et{
             camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1, 30);
             if(auto commandBuffer = etRenderer.beginFrame()){
                 int frameIndex = etRenderer.getFrameIndex();
-                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera};
+                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex]};
                 GlobalUbo ubo{};
                 ubo.projectionView = camera.getProjection() * camera.getView();
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);

@@ -7,5 +7,6 @@ namespace et{
         float frameTime;
         VkCommandBuffer commandBuffer;
         EtCamera &camera;
+        VkDescriptorSet globalDescriptorSet;
     };
 }
