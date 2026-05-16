@@ -1,7 +1,6 @@
 #pragma once
 #include "EtPipeline.hpp"
 #include "EtDevice.hpp"
-#include "EtCamera.hpp"
 #include <memory>
 #include <vector>
 #include <vulkan/vulkan_core.h>
