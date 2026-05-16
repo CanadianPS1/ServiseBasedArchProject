@@ -6,6 +6,7 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 #include "EtGameObject.hpp"
+#include "EtFrameInfo.hpp"
 namespace et{
     class SimpleRenderSystem{
         public:
@@ -13,7 +14,7 @@ namespace et{
             ~SimpleRenderSystem();
             SimpleRenderSystem(const SimpleRenderSystem &) = delete;
             SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
-            void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<EtGameObject> &gameObjects, const EtCamera &camera);
+            void renderGameObjects(std::vector<EtGameObject> &gameObjects, FrameInfo& frameInfo);
         private:
             void createPipelineLayout();
             void createPipeline(VkRenderPass renderPass);

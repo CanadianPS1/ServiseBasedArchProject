@@ -1,5 +1,6 @@
 #pragma once
 #include "EtDevice.hpp"
+#include "EtBuffer.hpp"
 #include <vulkan/vulkan_core.h>
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -37,12 +38,10 @@ namespace et{
             void createVertexBuffers(const std::vector<Vertex> &vertices);
             void createIndexBuffers(const std::vector<uint32_t> &indices);
             EtDevice& etDevice;
-            VkBuffer vertexBuffer;
-            VkDeviceMemory vertexBufferMemory;
+            std::unique_ptr<EtBuffer> vertexBuffer;
             uint32_t vertexCount;
             bool hasIndexBuffer = false;
-            VkBuffer indexBuffer;
-            VkDeviceMemory indexBufferMemory;
+            std::unique_ptr<EtBuffer> indexBuffer;
             uint32_t indexCount;
     };
 }

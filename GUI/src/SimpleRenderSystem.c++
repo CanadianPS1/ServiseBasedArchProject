@@ -13,7 +13,7 @@
 namespace et{
     struct SimplePushConstantData{
         glm::mat4 transform{1.f};
-        alignas(16)glm::vec3 color;
+        glm::mat4 normalMatrix{1.f};
     };
     SimpleRenderSystem::SimpleRenderSystem(EtDevice& device, VkRenderPass renderPass) : etDevice{device}{
         createPipelineLayout();
@@ -48,17 +48,18 @@ namespace et{
             pipelineConfig
         );
     }
-    void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<EtGameObject> &gameObjects, const EtCamera &camera){
-        etPipeline->bind(commandBuffer);
-        auto projectionView = camera.getProjection() * camera.getView();
+    void SimpleRenderSystem::renderGameObjects(std::vector<EtGameObject> &gameObjects, FrameInfo& frameInfo){
+        etPipeline->bind(frameInfo.commandBuffer);
+        auto projectionView = frameInfo.camera.getProjection() * frameInfo.camera.getView();
         for(auto& obj : gameObjects){
             SimplePushConstantData push{};
-            push.color = obj.color;
-            push.transform = projectionView * obj.transform.mat4();
-            vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+            auto modelMatrix = obj.transform.mat4();
+            push.transform = projectionView * modelMatrix;
+            push.normalMatrix = obj.transform.normalMatrix();
+            vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
             0, sizeof(SimplePushConstantData), &push);
-            obj.model->bind(commandBuffer);
-            obj.model->draw(commandBuffer);
+            obj.model->bind(frameInfo.commandBuffer);
+            obj.model->draw(frameInfo.commandBuffer);
         }
     }
 }
