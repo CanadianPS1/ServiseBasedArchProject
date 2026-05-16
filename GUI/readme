@@ -19,3 +19,7 @@ to compile shaders use
 chmod +x compile.sh
 
 ./compile.sh
+
+
+
+To create the engine i followed a tutorial by "Brendan Galea" so thanks to him for that
