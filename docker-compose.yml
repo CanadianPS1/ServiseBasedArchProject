@@ -1,0 +1,33 @@
+version: '3.9'
+
+services:
+
+  mongo:
+    image: mongo:latest
+    container_name: et-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: et_game
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: et-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  auth-service:
+    build: ./auth-service
+    container_name: et-auth-service
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+      - rabbitmq
+
+    env_file:
+      - ./auth-service/.env
