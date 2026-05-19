@@ -17,10 +17,8 @@
 #include "EtCamera.hpp"
 #include <chrono>
 namespace et{
-    struct GlobalUbo{
-        glm::mat4 projectionView{1.f};
-        glm::vec3 lightDirection = glm::normalize(glm::vec3{1.f,-3.f,-1.f});
-    };
+    void setEtLocation(GlobalUbo& ubo, float x, float y, float z){ubo.EtLocation = {x,y,z};}
+    glm::vec3 getEtLocation(GlobalUbo& ubo){return ubo.EtLocation;}
     EtMain::EtMain(){
         globalPool = EtDescriptorPool::Builder(etDevice)
             .setMaxSets(EtSwapChain::MAX_FRAMES_IN_FLIGHT)
@@ -61,7 +59,7 @@ namespace et{
             cameraController.moveInPlaneXZ(etWindow.getGLFWwindow(), frameTime, viewerObject);
             camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
             float aspect = etRenderer.getAspectRatio();
-            camera.setPerspectiveProjection(glm::radians(20.f), aspect, 1, 17);
+            camera.setPerspectiveProjection(glm::radians(20.f), aspect, 1, 30);
             if(auto commandBuffer = etRenderer.beginFrame()){
                 int frameIndex = etRenderer.getFrameIndex();
                 FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex]};

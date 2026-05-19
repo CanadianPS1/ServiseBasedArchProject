@@ -7,6 +7,11 @@
 #include "EtGameObject.hpp"
 #include "EtDescriptors.hpp"
 namespace et{
+    struct GlobalUbo{
+        glm::mat4 projectionView{1.f};
+        glm::vec3 lightDirection = glm::normalize(glm::vec3{1.f,-3.f,-1.f});
+        glm::vec3 EtLocation{0.0f, 6.7f, 13.f};
+    };
     class EtMain{
         public:
             static constexpr int WIDTH = 1400;
