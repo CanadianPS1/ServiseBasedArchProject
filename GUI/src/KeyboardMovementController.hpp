@@ -1,7 +1,7 @@
 #pragma once
 #include "EtGameObject.hpp"
 namespace et{
-    class KeyboardMovmentController{
+    class KeyboardMovementController{
         public:
           struct KeyMappings {
             int moveLeft = GLFW_KEY_A;
@@ -17,7 +17,7 @@ namespace et{
         };
         void moveInPlaneXZ(GLFWwindow* window, float dt, EtGameObject &gameObject);
         KeyMappings keys{};
-        float moveSpeed{3.f};
+        float moveSpeed{1.5f};
         float lookSpeed{1.5};
 
     };

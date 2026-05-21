@@ -276,7 +276,6 @@ namespace et{
     VkPresentModeKHR EtSwapChain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes){
         for(const auto &availablePresentMode : availablePresentModes){
             if(availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR){
-                std::cout << "Present mode: Mailbox" << std::endl;
                 return availablePresentMode;
             }
         }
@@ -286,7 +285,6 @@ namespace et{
         //     return availablePresentMode;
         //   }
         // }
-        std::cout << "Present mode: V-Sync" << std::endl;
         return VK_PRESENT_MODE_FIFO_KHR;
     }
     VkExtent2D EtSwapChain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities) {
