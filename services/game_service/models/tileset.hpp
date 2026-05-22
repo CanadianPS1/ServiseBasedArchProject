@@ -1,12 +1,12 @@
-#ifndef ET_GAME_SERVICE_TILESET_H
-#define ET_GAME_SERVICE_TILESET_H
-
-#include "types.hpp"
+#ifndef ET_GAME_SERVICE_TILESET_HPP
+#define ET_GAME_SERVICE_TILESET_HPP
 
 #include <format>
 #include <string>
 #include <stdexcept>
 #include <unordered_map>
+
+#include "types.hpp"
 
 namespace et_game {
 struct TileDef {

@@ -1,12 +1,12 @@
 #ifndef ET_GAME_SERVICE_WORLD_HPP
 #define ET_GAME_SERVICE_WORLD_HPP
 
-#include "types.hpp"
-
 #include <vector>
 #include <format>
 #include <stdexcept>
 #include <unordered_map>
+
+#include "types.hpp"
 
 namespace et_game {
 struct Exit {

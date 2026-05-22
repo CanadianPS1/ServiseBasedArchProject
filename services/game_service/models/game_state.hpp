@@ -1,13 +1,13 @@
 #ifndef ET_GAME_SERVICE_GAME_STATE_H
 #define ET_GAME_SERVICE_GAME_STATE_H
 
-#include "types.hpp"
-#include "world.hpp"
-
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <unordered_set>
+
+#include "types.hpp"
+#include "world.hpp"
 
 namespace et_game {
 enum class GameStatus {
