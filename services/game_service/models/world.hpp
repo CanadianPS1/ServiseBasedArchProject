@@ -35,8 +35,8 @@ struct PickupDef {
 struct Room {
     RoomId id;
 
-    int width = 0;
-    int height = 0;
+    int width{};
+    int height{};
     TilesetName tileset_name;
 
     std::vector<Exit> exits;
@@ -63,7 +63,7 @@ struct WorldConfig {
 };
 
 struct World {
-    int schema_version = 0;
+    int schema_version{};
     WorldConfig config;
 
     std::unordered_map<RoomId, Room> rooms;
