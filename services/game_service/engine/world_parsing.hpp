@@ -14,6 +14,7 @@
 #include "../models/world.hpp"
 
 namespace et_game::detail {
+
 using Json = nlohmann::json;
 
 template<typename T>

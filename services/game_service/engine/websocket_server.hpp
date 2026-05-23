@@ -3,29 +3,38 @@
 
 #include <memory>
 #include <cstdint>
+
 #include <ixwebsocket/IXWebSocketServer.h>
 
+#include "input_queue.hpp"
+
 namespace et_game {
+
 class WebsocketServer {
 public:
-    explicit WebsocketServer(std::uint16_t port);
+    WebsocketServer(std::uint16_t port, InputQueue& InputQueue);
 
     void run();
+
+    void send_msg_to_curr(const std::string& msg);
 
 private:
     using ConnectionPtr = std::shared_ptr<ix::ConnectionState>;
     using MessagePtr = const ix::WebSocketMessagePtr&;
-    using WebSocketPtr = ix::WebSocket&;
+    using WebSocketRef = ix::WebSocket&;
 
-    void message_handler(ConnectionPtr conn, WebSocketPtr web_socket, MessagePtr msg);;
+    void message_handler(ConnectionPtr conn, WebSocketRef web_socket, MessagePtr msg);
+    void on_open_handler(ConnectionPtr conn, WebSocketRef web_socket, MessagePtr msg);
+    void on_close_handler(ConnectionPtr conn, WebSocketRef web_socket, MessagePtr msg);
+    void on_message_handler(ConnectionPtr conn, WebSocketRef web_socket, MessagePtr msg);
+    void on_error_handler(ConnectionPtr conn, WebSocketRef web_socket, MessagePtr msg);
 
-    void on_open_handler(ConnectionPtr conn, WebSocketPtr web_socket, MessagePtr msg);
-    void on_close_handler(ConnectionPtr conn, WebSocketPtr web_socket, MessagePtr msg);
-    void on_message_handler(ConnectionPtr conn, WebSocketPtr web_socket, MessagePtr msg);
-    void on_error_handler(ConnectionPtr conn, WebSocketPtr web_socket, MessagePtr msg);
+    ix::WebSocketServer _server{};
+    InputQueue& _input_queue;
 
-private:
-    ix::WebSocketServer _server;
+    std::mutex _conn_mutex{};
+    ix::WebSocket* _curr_websocket{};
+    std::string _curr_client_id{};
 };
 
 } // namespace et_game

@@ -6,6 +6,7 @@
 #include "../models/tileset.hpp"
 
 namespace et_game {
+
 struct WorldLoadError : public std::runtime_error {
     using std::runtime_error::runtime_error;
 };
@@ -21,5 +22,6 @@ void validate_tilesets(
     const World& world,
     const std::unordered_map<TilesetName, Tileset>& tilesets
 );
+
 } // namespace et_game
 #endif

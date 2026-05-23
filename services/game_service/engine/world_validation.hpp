@@ -13,6 +13,7 @@
 #include "../models/tileset.hpp"
 
 namespace et_game::detail {
+
 class ValidationErrors {
 public:
     void add(const std::string& error);

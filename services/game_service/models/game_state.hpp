@@ -20,14 +20,14 @@ enum class GameStatus {
 struct PlayerState {
     Vec2 local_pos;
     RoomId current_room_id;
-    Direction facing = Direction::South;
+    Direction facing{Direction::South};
 };
 
 struct InputState {
-    bool move_north = false;
-    bool move_south = false;
-    bool move_east = false;
-    bool move_west = false;
+    bool move_north{false};
+    bool move_south{false};
+    bool move_east{false};
+    bool move_west{false};
 };
 
 struct GameState {

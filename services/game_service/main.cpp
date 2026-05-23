@@ -1,8 +1,10 @@
 #include <string>
+#include <thread>
 #include <exception>
 #include <spdlog/spdlog.h>
 
 #include "engine/game_loop.hpp"
+#include "engine/input_queue.hpp"
 #include "engine/world_loader.hpp"
 #include "engine/websocket_server.hpp"
 
@@ -19,8 +21,9 @@ int main() {
     spdlog::info("Starting ET Game Service...");
     spdlog::info("Loading world from '{}'...", world_path);
 
+    et_game::World world{};
     try {
-        et_game::World world = et_game::load_world(world_path);
+        world = et_game::load_world(world_path);
     }
     catch(const et_game::WorldLoadError& e) {
         spdlog::error("Failed to load world: {}", e.what());
@@ -31,7 +34,12 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    et_game::start_websocket_server(8002);
+    et_game::InputQueue input_queue{};
+    et_game::WebsocketServer websocket_server(8001, input_queue);
+
+    std::thread websocket_thread([&websocket_server]() {
+        websocket_server.run();
+    });
 
     return EXIT_SUCCESS;
 }

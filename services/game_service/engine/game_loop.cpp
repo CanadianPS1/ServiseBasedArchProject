@@ -1,15 +1,38 @@
 #include <chrono>
 #include <thread>
-#include <spdlog/spdlog.h>
+#include <format>
+#include <optional>
 
+#include <httplib.h>
+#include <spdlog/spdlog.h>
+#include <nlohmann/json.hpp>
+
+#include "visitor.hpp"
 #include "game_loop.hpp"
+#include "input_event.hpp"
+#include "../models/game_state.hpp"
 
 namespace et_game {
 
-static constexpr double TICK_HZ = 30.0;
-static constexpr double TICK_INTERVAL_SEC = 1.0 / TICK_HZ;
+namespace {
 
-void run_game_loop() {
+constexpr double TICK_HZ = 30.0;
+constexpr double TICK_INTERVAL_SEC = 1.0 / TICK_HZ;
+
+constexpr float MOVE_SPEED = 4.0f; // tiles per second
+
+constexpr const char *AUTH_HOST = "auth_service";
+constexpr std::uint16_t AUTH_PORT = 8000;
+
+std::optional<GameState> get_save_for_user(const std::string& user_id) {
+    httplib::Client client(AUTH_HOST, AUTH_PORT);
+    client.set_connection_timeout(2);
+    client.set_read_timeout(2);
+}
+
+} // anonymous namespace 
+
+void run_game_loop(InputQueue& input_queue) {
     using Clock = std::chrono::steady_clock;
     using std::chrono::duration;
 
@@ -32,9 +55,8 @@ void run_game_loop() {
         accumulated_time += frame_time;
 
         while(accumulated_time >= TICK_INTERVAL_SEC) {
-            accumulated_time -= TICK_INTERVAL_SEC;
-            spdlog::debug("Tick {} - frame_time: {:.3f}s, accumulated_time: {:.3f}s", tick_count, frame_time, accumulated_time);
             tick_count++;
+            accumulated_time -= TICK_INTERVAL_SEC;
         }
 
         // NOTE: Sleep thread for 1ms avoid CPU spinning
