@@ -7,6 +7,7 @@
 
 #include <spdlog/spdlog.h>
 #include <nlohmann/json.hpp>
+#include <spdlog/fmt/bundled/format.h>
 
 #include "world_loader.hpp"
 #include "world_parsing.hpp"
@@ -30,7 +31,7 @@ World load_world(const std::string& world_file_path) {
     }
 
     World world{};
-    const std::string ctx = "world root";
+    const std::string ctx = "root";
 
     world.schema_version = detail::require_field<int>(world_json_root, "schemaVersion", ctx);
     if(world.schema_version != 1) {

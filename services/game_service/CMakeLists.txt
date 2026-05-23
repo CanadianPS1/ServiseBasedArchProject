@@ -53,7 +53,7 @@ file(GLOB_RECURSE MODELS_SOURCES CONFIGURE_DEPENDS "models/*.cpp")
 file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS "engine/*.cpp")
 
 add_executable(et_game_service
-    main.cc
+    main.cpp
     ${MODELS_SOURCES}
     ${ENGINE_SOURCES}
 )

@@ -29,7 +29,7 @@ T require_field(
     try {
         return json_obj.at(field_name).get<T>();
     }
-    catch(const json::exception& e) {
+    catch(const Json::exception& e) {
         throw WorldLoadError(std::format("Failed to parse field '{}' in {}: {}", field_name, ctx, e.what()));
     }
 }
@@ -40,7 +40,7 @@ Room parse_room(const RoomId& id, const Json& json_obj);
 Exit parse_exit(const Json& json_obj, const RoomId& room_id, std::size_t index);
 std::unordered_map<ItemTypeId, PickupDef> parse_pickup_defs(const Json& json_obj);
 PickupSpawn parse_pickup_spawn(const Json& json_obj, const RoomId& room_id, std::size_t index);
-std::vector<TileId> decode_tile_grid(Json& json_obj, int width, int height, const RoomId& room_id);
+std::vector<TileId> decode_tile_grid(const Json& json_obj, int width, int height, const RoomId& room_id);
 
 } // namespace et_game::detail
 

@@ -15,7 +15,7 @@ WorldConfig parse_config(const Json& json_obj) {
 
     WorldConfig world_cfg{};
     world_cfg.starting_energy   = require_field<float>(json_obj, "startingEnergy", ctx);
-    world_cfg.energy_drain_rate = require_field<float>(json_obj, "energyDrain_rate", ctx);
+    world_cfg.energy_drain_rate = require_field<float>(json_obj, "energyDrainPerSecond", ctx);
     world_cfg.energy_per_candy  = require_field<float>(json_obj, "energyPerCandy", ctx);
     world_cfg.starting_room_id  = require_field<RoomId>(json_obj, "startRoomId", ctx);
 
@@ -186,7 +186,7 @@ Room parse_room(const RoomId& id, const Json& json_obj) {
     }
 
     room.tiles = decode_tile_grid(
-        require_field<std::vector<TileId>>(json_obj, "tiles", ctx),
+        require_field<Json>(json_obj, "tiles", ctx),
         room.width, room.height, id
     );
 

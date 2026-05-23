@@ -14,7 +14,7 @@ struct WorldLoadError : public std::runtime_error {
 // This is for simplicity and to avoid unnecessary coupling between the world loading and tileset loading processes.
 // In the future, if we want to decouple these processes, we can consider returning a more complex result from load_world()
 // that includes any necessary information for validation, or we can have load_world() take in the tilesets as an argument and 
-//perform validation internally.
+// perform validation internally.
 World load_world(const std::string& world_file_path);
 
 void validate_tilesets(

@@ -61,8 +61,7 @@ void validate_required_pieces(const World& world, ValidationErrors& errors) {
         const PickupDef& pickup_def = it->second;
         if(pickup_def.kind != PickupDef::Kind::PhonePiece) {
             errors.add(std::format(
-                "Required phone piece with ItemTypeId '{}' has invalid PickupType '{}', expected 'PhonePiece'!",
-                required_piece_id, pickup_def.kind == PickupDef::Kind::PhonePiece ? "PhonePiece" : "Candy"
+                "Required phone piece with ItemTypeId '{}' has invalid PickupType 'candy', expected 'PhonePiece'!", required_piece_id
             ));
             continue;
         }
@@ -100,6 +99,8 @@ void validate_exits(const World& world, ValidationErrors& errors) {
                     "Exit {} in room '{}' leads to non-existent room '{}'",
                     i, room_id, exit.destination_room_id
                 ));
+
+                continue;
             }
 
             const Room& destination_room = it->second;
@@ -177,4 +178,5 @@ void validate_room_reachability(const World& world, ValidationErrors& errors) {
             errors.add(std::format("Room with ID '{}' is unreachable from the starting room!", room_id));
         }
     }
+}
 } // namespace et_game::detail
