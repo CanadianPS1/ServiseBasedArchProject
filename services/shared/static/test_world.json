@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "config": {
+    "startingEnergy": 100.0,
+    "energyDrainPerSecond": 0.5,
+    "energyPerCandy": 25.0,
+    "startRoomId": "house_01",
+    "startSpawn": { "x": 2, "y": 2 },
+    "requiredPhonePieces": ["phone_antenna", "phone_dial", "phone_speaker"]
+  },
+  "pickupTypes": {
+    "phone_antenna": { "kind": "phonePiece", "displayName": "Antenna" },
+    "phone_dial":    { "kind": "phonePiece", "displayName": "Dial" },
+    "phone_speaker": { "kind": "phonePiece", "displayName": "Speaker" },
+    "candy":         { "kind": "candy",      "displayName": "Reese's Pieces" }
+  },
+  "rooms": {
+    "house_01": {
+      "tileset": "house",
+      "width": 10,
+      "height": 6,
+      "tiles": [
+        "1111111111",
+        "1000000001",
+        "1000300001",
+        "1000000000",
+        "1000000001",
+        "1111111111"
+      ],
+      "exits": [
+        {
+          "trigger": { "kind": "edge", "side": "E" },
+          "destinationRoomId": "forest_01",
+          "spawnPoint": { "x": 1, "y": 3 }
+        }
+      ],
+      "pickupSpawns": [
+        { "id": "pickup_house01_antenna", "type": "phone_antenna", "x": 6, "y": 2 },
+        { "id": "pickup_house01_candy_a", "type": "candy",         "x": 4, "y": 4 }
+      ]
+    },
+    "forest_01": {
+      "tileset": "forest",
+      "width": 10,
+      "height": 6,
+      "tiles": [
+        "1111111111",
+        "0000000001",
+        "0000000001",
+        "0000005001",
+        "0000000001",
+        "1111111111"
+      ],
+      "exits": [
+        {
+          "trigger": { "kind": "edge", "side": "W" },
+          "destinationRoomId": "house_01",
+          "spawnPoint": { "x": 8, "y": 3 }
+        }
+      ],
+      "pickupSpawns": [
+        { "id": "pickup_forest01_dial",    "type": "phone_dial",    "x": 5, "y": 2 },
+        { "id": "pickup_forest01_speaker", "type": "phone_speaker", "x": 7, "y": 3 },
+        { "id": "pickup_forest01_candy_a", "type": "candy",         "x": 3, "y": 4 }
+      ]
+    }
+  }
+}
