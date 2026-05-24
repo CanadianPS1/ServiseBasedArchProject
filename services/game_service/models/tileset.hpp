@@ -9,6 +9,7 @@
 #include "types.hpp"
 
 namespace et_game {
+
 struct TileDef {
     bool is_walkable = false;
     std::string display_name = "Unknown Tile";
@@ -21,7 +22,7 @@ struct Tileset {
 
     std::unordered_map<TileId, TileDef> tile_defs;
 
-    inline const TileDef& get_tiledef_by_id(TileId id) const {
+    const TileDef& get_tiledef_by_id(TileId id) const {
         auto it = tile_defs.find(id);
         if (it == tile_defs.end()) {
             throw std::runtime_error(std::format("Tile ID {} not found in tileset '{}'", id, name));
@@ -30,7 +31,7 @@ struct Tileset {
         return it->second;
     }
 
-    inline bool is_walkable(TileId id) const {
+    bool is_walkable(TileId id) const {
         return get_tiledef_by_id(id).is_walkable;
     }
 };

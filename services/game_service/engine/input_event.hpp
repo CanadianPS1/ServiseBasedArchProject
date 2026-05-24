@@ -3,6 +3,7 @@
 
 #include <string>
 #include <variant>
+
 #include <nlohmann/json.hpp>
 
 namespace et_game {

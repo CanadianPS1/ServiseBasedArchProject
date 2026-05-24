@@ -1,4 +1,5 @@
 #include <unordered_map>
+
 #include <spdlog/spdlog.h>
 
 #include "websocket_server.hpp"
@@ -11,7 +12,7 @@ static std::unordered_map<std::string, std::string> parse_query_string(
     std::unordered_map<std::string, std::string> query_params{};
     
     std::size_t query_start = uri.find('?');
-    if(query_start = std::string::npos) {
+    if(query_start == std::string::npos) {
         return query_params;
     }
 
@@ -66,22 +67,22 @@ void WebsocketServer::send_msg_to_curr(const std::string& msg) {
     _curr_websocket->send(msg);
 }
 
-void WebsocketServer::message_handler(ConnectionPtr conn, WebSocketRef web_socket, MessagePtr msg) {
+void WebsocketServer::message_handler(ConnectionPtr conn, WebSocketRef websocket, MessagePtr msg) {
     switch(msg->type) {
         case ix::WebSocketMessageType::Open:
-            on_open_handler(conn, web_socket, msg);
+            on_open_handler(conn, websocket, msg);
             break;
         
         case ix::WebSocketMessageType::Close:
-            on_close_handler(conn, web_socket, msg);
+            on_close_handler(conn, websocket, msg);
             break;
         
         case ix::WebSocketMessageType::Message:
-            on_message_handler(conn, web_socket, msg);
+            on_message_handler(conn, websocket, msg);
             break;
         
         case ix::WebSocketMessageType::Error:
-            on_error_handler(conn, web_socket, msg);
+            on_error_handler(conn, websocket, msg);
             break;
         
         default:
@@ -93,76 +94,90 @@ void WebsocketServer::message_handler(ConnectionPtr conn, WebSocketRef web_socke
 void WebsocketServer::on_open_handler(ConnectionPtr conn, WebSocketRef websocket, MessagePtr msg) {
     const std::string client_id = conn->getId();
     const std::string uri = msg->openInfo.uri;
+    spdlog::info("Client attempting to connect: id={}, uri={}", client_id, uri);
 
-    spdlog::info("Client connected: id={}, uri='{}'", client_id, uri);
+    auto params = parse_query_string(uri);
+    std::string user_id = params.count("userId") ? params["userId"] : "";
+    std::string mode = params.count("mode") ? params["mode"] : "continue";
 
-    {
-        std::lock_guard lock(_conn_mutex);
-        if(_curr_websocket) {
-            spdlog::warn(
-                "A client is already connected (id={}), new connection (id={}) will not receive messages!",
-                _curr_client_id, client_id
-            );
+    if (user_id.empty()) {
+        spdlog::warn("Connection from {} has no userId; rejecting!", client_id);
+        websocket.close(1008, "Missing userId query parameter!");
 
-            websocket.close(1008, "Server is single-player only! Only one client can be connected at a time!");
-            return;
-        }
-        
-        _curr_websocket = &websocket;
-        _curr_client_id = client_id;
-    }
-
-    auto query_params = parse_query_string(uri);
-    std::string user_id = query_params.count("userID") ? query_params["userID"] : "unknown";
-    std::string mode = query_params.count("mode") ? query_params["mode"] : "continue";
-
-    if(user_id.empty()) {
-        spdlog::warn("Client {} did not provide a userID, defaulting to 'unknown' and rejecting!", client_id);
-        websocket.close(1008, "Invalid client request: userID is required!");
-        
-        std::lock_guard lock(_conn_mutex);
-        _curr_websocket = nullptr;
-        _curr_client_id.clear();
-        
         return;
     }
 
-    spdlog::info("Client {} has userID '{}', mode '{}'", client_id, user_id, mode);
-    _input_queue.push(ConnectEvent{user_id, client_id, mode});
+    bool claimed_conn_slot{};
+    std::string existing_client_id{};
+    {
+        std::lock_guard lock(_conn_mutex);
+        if(!_curr_websocket) {
+            _curr_websocket = &websocket;
+            _curr_client_id = client_id;
+
+            claimed_conn_slot = true;
+        }
+        else {
+            existing_client_id = _curr_client_id;
+        }
+    }
+
+    if(!claimed_conn_slot) {
+        spdlog::warn(
+            "Rejecting connection from {}! Client {} has taken the connection slot!",
+            client_id, existing_client_id    
+        );
+
+        websocket.close(1008, "Server is single-player; another session is active!");
+    
+        return;
+    }
+
+    spdlog::info("Client accepted: id={}, userId={}, mode={}", client_id, user_id, mode);
+    _input_queue.push(ConnectEvent{client_id, user_id, mode});
 }
 
-void WebsocketServer::on_close_handler(ConnectionPtr conn, WebSocketRef web_socket, MessagePtr msg) {
+void WebsocketServer::on_close_handler(ConnectionPtr conn, WebSocketRef websocket, MessagePtr msg) {
+    (void) websocket;
+
     const std::string client_id = conn->getId();
-    spdlog::info("Client disconnected: id={}, code={}, reason='{}'",
+    spdlog::info("Client disconnected: id={}, code={}, reason='{}'!",
         client_id,
         msg->closeInfo.code,
         msg->closeInfo.reason
     );
 
+    bool was_current = false;
     {
         std::lock_guard lock(_conn_mutex);
         if(_curr_client_id == client_id) {
             _curr_websocket = nullptr;
             _curr_client_id.clear();
 
-            _input_queue.push(DisconnectEvent{client_id});
+            was_current = true;
         }
+    }
+
+    if(was_current) {
+        _input_queue.push(DisconnectEvent{client_id});
     }
 }
 
-void WebsocketServer::on_message_handler(ConnectionPtr conn, WebSocketRef web_socket, MessagePtr msg) {
+void WebsocketServer::on_message_handler(ConnectionPtr conn, WebSocketRef websocket, MessagePtr msg) {
+    (void) websocket;
+
     const std::string client_id = conn->getId();
     spdlog::debug("Received message from client {}: '{}'", client_id, msg->str);
 
+    bool is_current{};
     {
         std::lock_guard lock(_conn_mutex);
-        if(_curr_client_id != client_id) {
-            spdlog::warn(
-                "Received message from client {}, but current client is {}! Ignoring message: '{}'",
-                client_id, _curr_client_id, msg->str
-            );
-            return;
-        }
+        is_current = (_curr_client_id == client_id);
+    }
+
+    if(!is_current) {
+        spdlog::debug("Ignoring message from non-current client: {}", client_id);
+        return;
     }
 
     nlohmann::json payload{};
@@ -177,7 +192,8 @@ void WebsocketServer::on_message_handler(ConnectionPtr conn, WebSocketRef web_so
     _input_queue.push(GameEvent{client_id, std::move(payload)});
 }
 
-void WebsocketServer::on_error_handler(ConnectionPtr conn, WebSocketRef web_socket, MessagePtr msg) {
+void WebsocketServer::on_error_handler(ConnectionPtr conn, WebSocketRef websocket, MessagePtr msg) {
+    (void) websocket;
     spdlog::error("Error from client {}: {}", conn->getId(), msg->errorInfo.reason);
 }
 

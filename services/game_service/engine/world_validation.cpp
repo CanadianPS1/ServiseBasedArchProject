@@ -2,6 +2,7 @@
 #include "world_validation.hpp"
 
 namespace et_game::detail {
+
 void ValidationErrors::add(const std::string& error) {
     _errors.push_back(error);
 }
@@ -179,4 +180,5 @@ void validate_room_reachability(const World& world, ValidationErrors& errors) {
         }
     }
 }
+
 } // namespace et_game::detail

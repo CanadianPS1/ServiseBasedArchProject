@@ -1,6 +1,7 @@
 #include "world_parsing.hpp"
 
 namespace et_game::detail {
+
 Direction parse_direction(const std::string& dir_str) {
     if(dir_str == "N") return Direction::North;
     if(dir_str == "S") return Direction::South;
@@ -219,4 +220,5 @@ Room parse_room(const RoomId& id, const Json& json_obj) {
 
     return room;
 }
+
 } // namespace et_game::detail

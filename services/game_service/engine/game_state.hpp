@@ -6,10 +6,15 @@
 #include <algorithm>
 #include <unordered_set>
 
-#include "types.hpp"
-#include "world.hpp"
+#include <nlohmann/json.hpp>
+
+#include "../models/types.hpp"
+#include "../models/world.hpp"
 
 namespace et_game {
+
+using Json = nlohmann::json;
+
 enum class GameStatus {
     Won,
     Lost,
@@ -18,8 +23,8 @@ enum class GameStatus {
 };
 
 struct PlayerState {
-    Vec2 local_pos;
-    RoomId current_room_id;
+    Vec2 local_pos{};
+    RoomId current_room_id{};
     Direction facing{Direction::South};
 };
 
@@ -43,25 +48,30 @@ struct GameState {
 
     GameStatus status = GameStatus::Playing;
 
-    InputState input;
+    InputState input_state;
 
-    inline bool is_playing() const {
+    GameState() = default;
+
+    GameState(const std::string& user_id, const World& world);
+    GameState(const std::string& user_id, const Json& save_json);
+
+    bool is_playing() const {
         return status == GameStatus::Playing;
     }
 
-    inline bool is_resumable() const {
+    bool is_resumable() const {
         return status == GameStatus::Playing || status == GameStatus::Paused;
     }
 
-    inline bool is_pickup_active(const PickupId& pickup_id) const {
+    bool is_pickup_active(const PickupId& pickup_id) const {
         return collected_pickups.find(pickup_id) == collected_pickups.end();
     }
 
-    inline const Room& current_room(const World& world) const {
+    const Room& current_room(const World& world) const {
         return world.get_room_by_id(player.current_room_id);
     }
 
-    inline bool has_won(const World& world) const {
+    bool has_won(const World& world) const {
         if(collected_phone_pieces.size() < world.config.required_phone_pieces.size()) {
             return false;
         }
@@ -75,6 +85,7 @@ struct GameState {
         return true;
     }
 };
+
 } // namespace et_game
 
 #endif

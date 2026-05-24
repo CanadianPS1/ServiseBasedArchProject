@@ -5,11 +5,13 @@
 
 #include "engine/game_loop.hpp"
 #include "engine/input_queue.hpp"
+#include "engine/output_queue.hpp"
 #include "engine/world_loader.hpp"
+#include "engine/sender_thread.hpp"
 #include "engine/websocket_server.hpp"
 
 int main() {
-    /*
+    /* TODO: Restore once done testing
     const char *world_env_path = std::getenv("WORLD_JSON_PATH");
     const std::string world_path = world_env_path
         ? std::string(world_env_path)
@@ -35,11 +37,27 @@ int main() {
     }
 
     et_game::InputQueue input_queue{};
+    et_game::OutputQueue output_queue{};
     et_game::WebsocketServer websocket_server(8001, input_queue);
 
     std::thread websocket_thread([&websocket_server]() {
         websocket_server.run();
     });
+
+    spdlog::info("Websocket server thread running!");
+
+    std::thread sender_thread([&websocket_server, &output_queue]() {
+        et_game::run_sender_thread(websocket_server, output_queue);
+    });
+
+    spdlog::info("Sender thread running!");
+    spdlog::info("Starting game loop...");
+    
+    et_game::run_game_loop(world, input_queue, output_queue);
+
+    output_queue.shutdown();
+    sender_thread.join();
+    websocket_thread.join();
 
     return EXIT_SUCCESS;
 }

@@ -4,6 +4,7 @@
 #include <string>
 
 namespace et_game {
+
 using RoomId = std::string;
 using TileId = unsigned char;
 using PickupId = std::string;
@@ -42,6 +43,7 @@ struct Vec2 {
         return !(lhs == rhs);
     }
 };
+
 }; // namespace et_game
 
 #endif

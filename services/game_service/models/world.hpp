@@ -9,17 +9,18 @@
 #include "types.hpp"
 
 namespace et_game {
+
 struct Exit {
-    Vec2 spawn_pos;
+    Vec2 spawn_pos{};
     // NOTE: This is the direction the exit is on from the perspective of the room it is in. E.g.: an exit on the north wall would have Direction::North, even if it leads south to the next room.
-    Direction edge_direction;
-    RoomId destination_room_id;
+    Direction edge_direction{};
+    RoomId destination_room_id{};
 };
 
 struct PickupSpawn {
-    TilePos pos;
-    PickupId id;
-    ItemTypeId type;
+    TilePos pos{};
+    PickupId id{};
+    ItemTypeId type{};
 };
 
 struct PickupDef {
@@ -28,26 +29,26 @@ struct PickupDef {
         Candy
     };
 
-    Kind kind = Kind::PhonePiece;
-    std::string display_name = "Unknown Pickup";
+    Kind kind{Kind::PhonePiece};
+    std::string display_name{"Unknown Pickup"};
 };
 
 struct Room {
-    RoomId id;
+    RoomId id{};
 
     int width{};
     int height{};
-    TilesetName tileset_name;
+    TilesetName tileset_name{};
 
-    std::vector<Exit> exits;
-    std::vector<TileId> tiles;
-    std::vector<PickupSpawn> pickup_spawns;
+    std::vector<Exit> exits{};
+    std::vector<TileId> tiles{};
+    std::vector<PickupSpawn> pickup_spawns{};
 
-    inline TileId tile_at(int x, int y) const {
+    TileId tile_at(int x, int y) const {
         return tiles[y * width + x];
     }
 
-    inline bool is_within_bounds(int x, int y) const {
+    bool is_within_bounds(int x, int y) const {
         return x >= 0 && x < width && y >= 0 && y < height;
     }
 };
@@ -57,19 +58,19 @@ struct WorldConfig {
     float energy_drain_rate = 0.5f;
     float energy_per_candy = 25.0f;
 
-    Vec2 et_spawn_pos;
-    RoomId starting_room_id;
-    std::vector<ItemTypeId> required_phone_pieces;
+    Vec2 et_spawn_pos{};
+    RoomId starting_room_id{};
+    std::vector<ItemTypeId> required_phone_pieces{};
 };
 
 struct World {
     int schema_version{};
-    WorldConfig config;
+    WorldConfig config{};
 
-    std::unordered_map<RoomId, Room> rooms;
-    std::unordered_map<ItemTypeId, PickupDef> pickup_defs;
+    std::unordered_map<RoomId, Room> rooms{};
+    std::unordered_map<ItemTypeId, PickupDef> pickup_defs{};
 
-    inline const Room& get_room_by_id(const RoomId& room_id) const {
+    const Room& get_room_by_id(const RoomId& room_id) const {
         auto it = rooms.find(room_id);
         if(it == rooms.end()) {
             throw std::out_of_range(std::format("Room with ID '{}' not found", room_id));
@@ -78,7 +79,7 @@ struct World {
         return it->second;
     }
 
-    inline const PickupDef& get_pickup_def_by_id(const ItemTypeId& item_type_id) const {
+    const PickupDef& get_pickup_def_by_id(const ItemTypeId& item_type_id) const {
         auto it = pickup_defs.find(item_type_id);
         if(it == pickup_defs.end()) {
             throw std::out_of_range(std::format("PickupDef with ItemTypeId '{}' not found", item_type_id));

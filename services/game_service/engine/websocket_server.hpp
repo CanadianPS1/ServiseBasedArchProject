@@ -23,11 +23,11 @@ private:
     using MessagePtr = const ix::WebSocketMessagePtr&;
     using WebSocketRef = ix::WebSocket&;
 
-    void message_handler(ConnectionPtr conn, WebSocketRef web_socket, MessagePtr msg);
-    void on_open_handler(ConnectionPtr conn, WebSocketRef web_socket, MessagePtr msg);
-    void on_close_handler(ConnectionPtr conn, WebSocketRef web_socket, MessagePtr msg);
-    void on_message_handler(ConnectionPtr conn, WebSocketRef web_socket, MessagePtr msg);
-    void on_error_handler(ConnectionPtr conn, WebSocketRef web_socket, MessagePtr msg);
+    void message_handler(ConnectionPtr conn, WebSocketRef websocket, MessagePtr msg);
+    void on_open_handler(ConnectionPtr conn, WebSocketRef websocket, MessagePtr msg);
+    void on_close_handler(ConnectionPtr conn, WebSocketRef websocket, MessagePtr msg);
+    void on_message_handler(ConnectionPtr conn, WebSocketRef websocket, MessagePtr msg);
+    void on_error_handler(ConnectionPtr conn, WebSocketRef websocket, MessagePtr msg);
 
     ix::WebSocketServer _server{};
     InputQueue& _input_queue;

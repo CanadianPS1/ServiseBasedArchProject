@@ -14,6 +14,7 @@
 #include "world_validation.hpp"
 
 namespace et_game {
+
 using Json = nlohmann::json;
 
 World load_world(const std::string& world_file_path) {
@@ -117,4 +118,5 @@ void validate_tilesets(
 
     errors.throw_if_any_error();
 }
+
 } // namespace et_game
