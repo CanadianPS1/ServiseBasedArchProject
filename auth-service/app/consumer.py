@@ -1,4 +1,5 @@
 import json
+import asyncio
 import aio_pika
 
 from app.config import (
@@ -10,9 +11,24 @@ from app.models import SaveEventModel
 from app.services.save_service import SaveService
 
 async def consume_save_events():
-    connection = await aio_pika.connect_robust(
-        RABBITMQ_URL
-    )
+    connection = None
+    while connection is None:
+        try:
+            print("Connecting to RabbitMQ...")
+
+            connection = await aio_pika.connect_robust(
+                RABBITMQ_URL
+            )
+
+            print("Connected to RabbitMQ")
+        except Exception as e:
+            print(
+                f"RabbitMQ connection failed: {e}"
+            )
+
+            print("Retrying in 5 seconds...")
+
+            await asyncio.sleep(5)
 
     channel = await connection.channel()
 
@@ -21,7 +37,12 @@ async def consume_save_events():
         durable=True
     )
 
-    print("RabbitMQ consumer started")
+    await queue.purge() # In case you want to keep old messages, get rid of this
+
+    print(
+        f"Listening for messages on "
+        f"queue: {SAVE_QUEUE}"
+    )
 
     async with queue.iterator() as queue_iter:
         async for message in queue_iter:

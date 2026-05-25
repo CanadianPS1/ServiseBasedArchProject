@@ -6,8 +6,8 @@ from app.services.save_service import SaveService
 router = APIRouter()
 
 
-@router.get("/save/{user_id}")
-async def get_save(user_id: str):
+@router.get("/get_game_state/{user_id}")
+async def get_game_state(user_id: str):
     save = await SaveService.get_save(user_id)
 
     if not save:
@@ -19,25 +19,11 @@ async def get_save(user_id: str):
     return save
 
 
-@router.get("/save/{user_id}/exists")
-async def save_exists(user_id: str):
-    save = await SaveService.save_exists(user_id)
-
-    if not save:
-        return {
-            "exists": False
-        }
-
-    return {
-        "exists": True,
-        "savedAt": save["savedAt"],
-        "status": save["status"]
-    }
-
-
-@router.delete("/save/{user_id}")
+@router.delete("/delete_save/{user_id}")
 async def delete_save(user_id: str):
-    deleted_count = await SaveService.delete_save(user_id)
+    deleted_count = await SaveService.delete_save(
+        user_id
+    )
 
     if deleted_count == 0:
         raise HTTPException(

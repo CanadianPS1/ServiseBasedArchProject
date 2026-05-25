@@ -42,19 +42,7 @@ class SaveService:
 
         await db.saves.update_one(
             {
-                "userId": user_id,
-                "$or": [
-                    {
-                        "savedAt": {
-                            "$lt": saved_at
-                        }
-                    },
-                    {
-                        "savedAt": {
-                            "$exists": False
-                        }
-                    }
-                ]
+                "userId": user_id
             },
             {
                 "$set": {
