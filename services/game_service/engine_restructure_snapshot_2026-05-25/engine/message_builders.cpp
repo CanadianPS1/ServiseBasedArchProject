@@ -6,7 +6,33 @@ namespace et_game {
 
 using Json = nlohmann::json;
 
-std::string build_room_loaded(const World& world, const GameState& game_state) {
+namespace {
+Json build_active_pickups(const Room& room, const GameState& game_state) {
+    Json active_pickups = Json::array();
+    for(const auto& pickup_spawn : room.pickup_spawns) {
+        if(!game_state.is_pickup_active(pickup_spawn.id)) {
+            continue;
+        }
+
+        active_pickups.push_back({
+            {"id", pickup_spawn.id},
+            {"type", pickup_spawn.type},
+            {"x", pickup_spawn.pos.x},
+            {"y", pickup_spawn.pos.y}
+        });
+    }
+
+    return active_pickups;
+}
+
+
+} // anonymous namespace
+
+std::string build_room_loaded(
+    const World& world,
+    const GameState& game_state,
+    std::optional<Direction> arrived_from
+) {
     const Room& room = world.get_room_by_id(game_state.player.current_room_id);
 
     Json root_json{};
@@ -51,10 +77,17 @@ std::string build_room_loaded(const World& world, const GameState& game_state) {
     root_json["player"]["x"] = game_state.player.local_pos.x;
     root_json["player"]["y"] = game_state.player.local_pos.y;
 
+
+    if(arrived_from.has_value()) {
+        root_json["arrivedFrom"] = direction_to_string(*arrived_from);
+    }
+
     return root_json.dump();
 }
 
-std::string build_state_update(const GameState& game_state) {
+std::string build_state_update(const World& world, const GameState& game_state) {
+    const Room& room = world.get_room_by_id(game_state.player.current_room_id);
+
     Json root_json{};
     root_json["type"] = "state_update";
     root_json["player"]["x"] = game_state.player.local_pos.x;
@@ -62,6 +95,15 @@ std::string build_state_update(const GameState& game_state) {
     root_json["energy"] = game_state.energy;
     root_json["phonePieceCount"] = static_cast<int>(game_state.collected_phone_pieces.size());
     root_json["candyCount"] = game_state.candy_count;
+    root_json["activePickups"] = build_active_pickups(room, game_state);
+
+    return root_json.dump();
+}
+
+std::string build_game_over(const GameState& game_state) {
+    Json root_json{};
+    root_json["type"] = "game_over";
+    root_json["outcome"] = game_state.status == GameStatus::Won ? "won" : "lost";
 
     return root_json.dump();
 }

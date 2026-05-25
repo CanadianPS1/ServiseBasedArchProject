@@ -1,25 +1,24 @@
 #include <chrono>
 #include <thread>
-#include <format>
 #include <optional>
 
 #include <httplib.h>
 #include <spdlog/spdlog.h>
 #include <nlohmann/json.hpp>
 
-#include "visitor.hpp"
-#include "game_loop.hpp"
-#include "game_state.hpp"
-#include "save_client.hpp"
-#include "input_event.hpp"
-#include "message_builders.hpp"
-#include "game_event_handlers.hpp"
+#include "engine/util/visitor.hpp"
+#include "engine/session/game_loop.hpp"
+#include "engine/simulation/game_logic.hpp"
+#include "engine/state/game_state.hpp"
+#include "engine/network/save_client.hpp"
+#include "engine/events/input_event.hpp"
+#include "engine/protocol/message_builders.hpp"
+#include "engine/events/game_event_handlers.hpp"
 
 namespace et_game {
 
 static constexpr double TICK_HZ = 30.0;
 static constexpr double TICK_INTERVAL_SEC = 1.0 / TICK_HZ;
-static constexpr float MOVE_SPEED = 4.0f; // tiles per second
 
 void handle_connect(
     const ConnectEvent& connect_event,
@@ -40,7 +39,7 @@ void handle_connect(
             game_state = GameState(connect_event.user_id, world);
         }
 
-        output_queue.push(build_room_loaded(world, *game_state));
+        output_queue.push(build_room_loaded(world, *game_state, std::nullopt));
     }
     catch(const std::exception& e) {
         spdlog::error("Failed to start game session! {}", e.what());
@@ -61,20 +60,32 @@ void handle_game_event(const GameEvent& game_event, std::optional<GameState>& ga
     dispatch_game_event(*game_state, game_event.payload);
 }
 
-void apply_movement_event(GameState& game_state, double dt) {
-    if(!game_state.is_playing()) { return; }
-
-    Vec2& player_pos = game_state.player.local_pos;
-    if(game_state.input_state.move_north) { player_pos.y -= MOVE_SPEED * dt; } 
-    if(game_state.input_state.move_south) { player_pos.y += MOVE_SPEED * dt; }
-    if(game_state.input_state.move_east)  { player_pos.x += MOVE_SPEED * dt; }
-    if(game_state.input_state.move_west)  { player_pos.x -= MOVE_SPEED * dt; }
-
-}
-
-void tick(GameState& game_state, double dt, OutputQueue& output_queue) {
+void tick(
+    GameState& game_state,
+    const World& world,
+    double dt,
+    OutputQueue& output_queue
+) {
+    if(!game_state.is_playing()) {
+        return;
+    }
+    
     apply_movement_event(game_state, dt);
-    output_queue.push(build_state_update(game_state));
+
+    if(handle_exit_transitions(game_state, world, output_queue)) {
+        return; 
+    }
+
+    handle_pickup_collection(game_state, world);
+    drain_energy(game_state, world, dt);
+    check_win_lose(game_state, world);
+
+    if(!game_state.is_playing()) {
+        output_queue.push(build_game_over(game_state));
+        return;
+    }
+
+    output_queue.push(build_state_update(world, game_state));
 }
 
 void run_game_loop(
@@ -110,12 +121,11 @@ void run_game_loop(
                     [&](const ConnectEvent& connect_event) { handle_connect(connect_event, world, game_state, output_queue); },
                     [&](const DisconnectEvent& disconnect_event) { handle_disconnect(disconnect_event, game_state); },
                     [&](const GameEvent& game_event) { handle_game_event(game_event, game_state); }
-                    }, *event
-                );
+                    }, *event);
             }
 
             if(game_state.has_value()) {
-                tick(*game_state, TICK_INTERVAL_SEC, output_queue);
+                tick(*game_state, world, TICK_INTERVAL_SEC, output_queue);
             }
 
             accumulated_time -= TICK_INTERVAL_SEC;

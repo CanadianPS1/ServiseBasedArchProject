@@ -51,6 +51,15 @@ struct Room {
     bool is_within_bounds(int x, int y) const {
         return x >= 0 && x < width && y >= 0 && y < height;
     }
+
+    const Exit *find_exit_on_side(Direction side) const {
+        for(const auto& exit : exits) {
+            if(exit.edge_direction == side) {
+                return &exit;
+            }
+        }
+        return nullptr;
+    }
 };
 
 struct WorldConfig {
