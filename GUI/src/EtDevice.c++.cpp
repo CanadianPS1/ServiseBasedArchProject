@@ -69,7 +69,6 @@ namespace et {
         uint32_t deviceCount = 0;
         vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
         if (deviceCount == 0) throw std::runtime_error("failed to find GPUs with Vulkan support!");
-        std::cout << "Device count: " << deviceCount << std::endl;
         std::vector<VkPhysicalDevice> devices(deviceCount);
         vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
         for(const auto &device : devices){
@@ -80,7 +79,6 @@ namespace et {
         }
         if(physicalDevice == VK_NULL_HANDLE) throw std::runtime_error("failed to find a suitable GPU!");
         vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-        std::cout << "physical device: " << properties.deviceName << std::endl;
     }
     void EtDevice::createLogicalDevice(){
         QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
@@ -189,12 +187,10 @@ namespace et {
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
         std::unordered_set<std::string> available;
         for(const auto &extension : extensions){
-            std::cout << "\t" << extension.extensionName << std::endl;
             available.insert(extension.extensionName);
         }
         auto requiredExtensions = getRequiredExtensions();
         for(const auto &required : requiredExtensions){
-            std::cout << "\t" << required << std::endl;
             if(available.find(required) == available.end()) throw std::runtime_error("Missing required glfw extension");
         }
     }
