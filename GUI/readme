@@ -8,6 +8,17 @@ run:
 
    docker run --rm   --gpus all   -e DISPLAY=$DISPLAY   -v /tmp/.X11-unix:/tmp/.X11-unix   et
 
+on my laptop i had to run this for it to run:
+
+   docker run --rm -it \
+      --gpus all \
+      --device /dev/dri \
+      --env NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute \
+      --env DISPLAY=$DISPLAY \
+      --volume /tmp/.X11-unix:/tmp/.X11-unix \
+   et
+
+
 if your on linux you must configure 
 
 xhost +local:docker
