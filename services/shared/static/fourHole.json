@@ -1,0 +1,46 @@
+{
+    "fourHole_1" : {
+        "id" : 4,
+        "tileset" : "fourHole_1",
+        "width" : 10,
+        "height" : 10,
+        "tiles" : [
+            "0000000000",
+            "0000000000",
+            "0111001110",
+            "0111001110",
+            "0000000000",
+            "0000000000",
+            "0111001110",
+            "0111001110",
+            "0000000000",
+            "0000000000"
+        ],
+        "exits" : [
+            {
+                "trigger" : {"kind" : "edge",
+                            "side" : "W"},
+                "destinationRoomId" : "dc_1",
+                "spawnPoint" : {"x" : 9.9, "y" : null}
+            },{
+                "trigger" : {"kind" : "edge",
+                            "side" : "E"},
+                "destinationRoomId" : "forest_1",
+                "spawnPoint" : {"x" : 0, "y" : null}
+            },{
+                "trigger" : {"kind" : "edge",
+                            "side" : "S"},
+                "destinationRoomId" : "bottomHole_1",
+                "spawnPoint" : {"x" : null, "y" : 9.9}
+            },{
+                "trigger" : {"kind" : "edge",
+                            "side" : "N"},
+                "destinationRoomId" : "topHole_1",
+                "spawnPoint" : {"x" : null, "y" : 0}
+            }
+        ],
+        "pickupSpawns" : [
+
+        ]
+    }
+}

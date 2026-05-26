@@ -1,22 +1,20 @@
 {
-    "_comment" : "all locations should be float values, if for any reason degrees are needed, instead use radians",
-    "gameStarted" : false,
-    "currentTile" : 4,
-    "etX" : 0,
-    "etZ" : 0,
-    "etEngery" : 9999,
-    "etCandyCount" : 0,
-    "currentTileCandyX" : [],
-    "currentTileCandyZ" : [],
-    "etInHole" : false,
-    "phonePiece1X" : null,
-    "phonePiece1Z" : null,
-    "phonePiece2X" : null,
-    "phonePiece2Z" : null,
-    "phonePiece3X" : null,
-    "phonePiece3Z" : null,
-    "ciaAgentX" : null,
-    "ciaAgentZ" : null,
-    "scientistX" : null,
-    "scientistZ" : null
+    "schemaVersion": 1,
+    "config": {
+        "startingEngery" : 9999,
+        "energyDrainedPerStep" : 1,
+        "energyPerCandy" : 25,
+        "startRoomId" : "forest_1",
+        "startSpawn" : {"x" : 5, "z" : 5},
+        "requiredPhonePieces": ["phone_antenna", "phone_dial", "phone_speaker"]
+    },
+    "pickupTypes": {
+        "phone_antenna" : {"kind": "phonePiece", "displayName": "Antenna"},
+        "phone_dial" : {"kind": "phonePiece", "displayName": "Dial"},
+        "phone_speaker" : {"kind": "phonePiece", "displayName": "Speaker"},
+        "candy" : {"kind": "candy", "displayName": "Reese's Pieces"}
+    },
+    "rooms": ["topHole_1", "topHole_2", "topHole_3", "topHole_4", 
+              "fourHole_1", "forest_1", "ultraHole_1", "dc_1",
+              "bottomHole_1", "bottomHole_2", "bottomHole_3", "bottomHole_4"]
 }

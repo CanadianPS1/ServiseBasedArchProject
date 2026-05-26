@@ -1,0 +1,175 @@
+{
+    "topHole_1" : {
+        "id" : 0,
+        "tileset" : "tophole_1",
+        "width" : 10,
+        "height" : 10,
+        "tiles" : [
+            "0000000000",
+            "0110110110",
+            "0110110110",
+            "0110110110",
+            "0110000110",
+            "0110000110",
+            "0110000110",
+            "0110110110",
+            "0110110110",
+            "0000000000"
+        ],
+        "exits" : [
+            {
+                "trigger" : {"kind" : "edge",
+                            "side" : "W"},
+                "destinationRoomId" : "topHole_4",
+                "spawnPoint" : {"x" : 9.9, "y" : null}
+            },{
+                "trigger" : {"kind" : "edge",
+                            "side" : "E"},
+                "destinationRoomId" : "topHole_2",
+                "spawnPoint" : {"x" : 0, "y" : null}
+            },{
+                "trigger" : {"kind" : "edge",
+                            "side" : "S"},
+                "destinationRoomId" : "fourHole_1",
+                "spawnPoint" : {"x" : null, "y" : 9.9}
+            },{
+                "trigger" : {"kind" : "edge",
+                            "side" : "N"},
+                "destinationRoomId" : "bottomHole_1",
+                "spawnPoint" : {"x" : null, "y" : 0}
+            }
+        ],
+        "pickupSpawns" : [
+
+        ]
+    },"topHole_2" : {
+        "id" : 1,
+        "tileset" : "tophole_2",
+        "width" : 10,
+        "height" : 10,
+        "tiles" : [
+            "0000000000",
+            "0110110110",
+            "0110110110",
+            "0110110110",
+            "0110000110",
+            "0110000110",
+            "0110000110",
+            "0110110110",
+            "0110110110",
+            "0000000000"
+        ],
+        "exits" : [
+            {
+                "trigger" : {"kind" : "edge",
+                            "side" : "W"},
+                "destinationRoomId" : "topHole_1",
+                "spawnPoint" : {"x" : 9.9, "y" : null}
+            },{
+                "trigger" : {"kind" : "edge",
+                            "side" : "E"},
+                "destinationRoomId" : "topHole_3",
+                "spawnPoint" : {"x" : 0, "y" : null}
+            },{
+                "trigger" : {"kind" : "edge",
+                            "side" : "S"},
+                "destinationRoomId" : "forest_1",
+                "spawnPoint" : {"x" : null, "y" : 9.9}
+            },{
+                "trigger" : {"kind" : "edge",
+                            "side" : "N"},
+                "destinationRoomId" : "bottomHole_2",
+                "spawnPoint" : {"x" : null, "y" : 0}
+            }
+        ],
+        "pickupSpawns" : [
+
+        ]
+    },"topHole_3" : {
+        "id" : 2,
+        "tileset" : "tophole_3",
+        "width" : 10,
+        "height" : 10,
+        "tiles" : [
+            "0000000000",
+            "0110110110",
+            "0110110110",
+            "0110110110",
+            "0110000110",
+            "0110000110",
+            "0110000110",
+            "0110110110",
+            "0110110110",
+            "0000000000"
+        ],
+        "exits" : [
+            {
+                "trigger" : {"kind" : "edge",
+                            "side" : "W"},
+                "destinationRoomId" : "topHole_2",
+                "spawnPoint" : {"x" : 9.9, "y" : null}
+            },{
+                "trigger" : {"kind" : "edge",
+                            "side" : "E"},
+                "destinationRoomId" : "topHole_4",
+                "spawnPoint" : {"x" : 0, "y" : null}
+            },{
+                "trigger" : {"kind" : "edge",
+                            "side" : "S"},
+                "destinationRoomId" : "ultraHole_1",
+                "spawnPoint" : {"x" : null, "y" : 9.9}
+            },{
+                "trigger" : {"kind" : "edge",
+                            "side" : "N"},
+                "destinationRoomId" : "bottomHole_3",
+                "spawnPoint" : {"x" : null, "y" : 0}
+            }
+        ],
+        "pickupSpawns" : [
+
+        ]
+    },"topHole_4" : {
+        "id" : 3,
+        "tileset" : "tophole_4",
+        "width" : 10,
+        "height" : 10,
+        "tiles" : [
+            "0000000000",
+            "0110110110",
+            "0110110110",
+            "0110110110",
+            "0110000110",
+            "0110000110",
+            "0110000110",
+            "0110110110",
+            "0110110110",
+            "0000000000"
+        ],
+        "exits" : [
+            {
+                "trigger" : {"kind" : "edge",
+                            "side" : "W"},
+                "destinationRoomId" : "topHole_3",
+                "spawnPoint" : {"x" : 9.9, "y" : null}
+            },{
+                "trigger" : {"kind" : "edge",
+                            "side" : "E"},
+                "destinationRoomId" : "topHole_1",
+                "spawnPoint" : {"x" : 0, "y" : null}
+            },{
+                "trigger" : {"kind" : "edge",
+                            "side" : "S"},
+                "destinationRoomId" : "dc_1",
+                "spawnPoint" : {"x" : null, "y" : 9.9}
+            },{
+                "trigger" : {"kind" : "edge",
+                            "side" : "N"},
+                "destinationRoomId" : "bottomHole_4",
+                "spawnPoint" : {"x" : null, "y" : 0}
+            }
+        ],
+        "pickupSpawns" : [
+
+        ]
+    }
+}
