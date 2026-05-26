@@ -17,8 +17,9 @@
 #include "EtCamera.hpp"
 #include <chrono>
 namespace et{
-    void setEtLocation(GlobalUbo& ubo, float x, float y, float z){ubo.EtLocation = {x,y,z};}
-    glm::vec3 getEtLocation(GlobalUbo& ubo){return ubo.EtLocation;}
+    glm::vec3 etLocation;
+    void setEtLocation(glm::vec3 vec){etLocation = {vec.x,vec.y,vec.z};}
+    glm::vec3 getEtLocation(){return etLocation;}
     EtMain::EtMain(){
         globalPool = EtDescriptorPool::Builder(etDevice)
             .setMaxSets(EtSwapChain::MAX_FRAMES_IN_FLIGHT)
@@ -56,6 +57,7 @@ namespace et{
         et.name = "et";
         et.transform.translation = {0.0f, 6.7f, 13.f};
         et.transform.scale = {0.25f, 0.25f, 0.25f};
+        setEtLocation(et.transform.translation);
         gameObjects.push_back(std::move(et));
         EtGameObject& etRef = gameObjects.back();
         KeyboardMovementController etController{};
@@ -65,8 +67,8 @@ namespace et{
             auto newTime = std::chrono::high_resolution_clock::now();
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
-            cameraController.moveInPlaneXZ(etWindow.getGLFWwindow(), frameTime, viewerObject);
-            etController.moveInPlaneXZ(etWindow.getGLFWwindow(), frameTime, etRef);
+            cameraController.moveInPlaneXZ(etWindow.getGLFWwindow(), frameTime, viewerObject, etLocation);
+            etController.moveInPlaneXZ(etWindow.getGLFWwindow(), frameTime, etRef, etLocation);
             camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
             float aspect = etRenderer.getAspectRatio();
             camera.setPerspectiveProjection(glm::radians(20.f), aspect, 1, 30);
@@ -74,6 +76,7 @@ namespace et{
                 int frameIndex = etRenderer.getFrameIndex();
                 FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex]};
                 GlobalUbo ubo{};
+                ubo.etLocation = etLocation;
                 ubo.projectionView = camera.getProjection() * camera.getView();
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();

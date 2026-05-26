@@ -15,7 +15,7 @@ namespace et{
             int lookUp = GLFW_KEY_UP;
             int lookDown = GLFW_KEY_DOWN;
         };
-        void moveInPlaneXZ(GLFWwindow* window, float dt, EtGameObject &gameObject);
+        void moveInPlaneXZ(GLFWwindow* window, float dt, EtGameObject &gameObject, glm::vec3& location);
         KeyMappings keys{};
         float moveSpeed{1.5f};
         float lookSpeed{1.5};
