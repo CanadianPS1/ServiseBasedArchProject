@@ -1,0 +1,25 @@
+ to run the GUI with normal docker you must
+
+ build :
+
+   docker build -t et .
+
+run:
+
+   docker run --rm   --gpus all   -e DISPLAY=$DISPLAY   -v /tmp/.X11-unix:/tmp/.X11-unix   et
+
+if your on linux you must configure 
+
+xhost +local:docker
+
+i dont use windows or mac so i dont know if it will run out of the gate, 
+
+to compile shaders use 
+
+chmod +x compile.sh
+
+./compile.sh
+
+
+
+To create the engine i followed a tutorial by "Brendan Galea" so thanks to him for that

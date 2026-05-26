@@ -1,0 +1,22 @@
+{
+    "_comment" : "all locations should be float values, if for any reason degrees are needed, instead use radians",
+    "gameStarted" : false,
+    "currentTile" : 4,
+    "etX" : 0,
+    "etZ" : 0,
+    "etEngery" : 9999,
+    "etCandyCount" : 0,
+    "currentTileCandyX" : [],
+    "currentTileCandyZ" : [],
+    "etInHole" : false,
+    "phonePiece1X" : null,
+    "phonePiece1Z" : null,
+    "phonePiece2X" : null,
+    "phonePiece2Z" : null,
+    "phonePiece3X" : null,
+    "phonePiece3Z" : null,
+    "ciaAgentX" : null,
+    "ciaAgentZ" : null,
+    "scientistX" : null,
+    "scientistZ" : null
+}
