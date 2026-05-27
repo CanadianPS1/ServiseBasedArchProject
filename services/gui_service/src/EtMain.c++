@@ -10,6 +10,7 @@
 #include "EtBuffer.hpp"
 #include "SimpleRenderSystem.hpp"
 #include "KeyboardMovementController.hpp"
+#include "LoggerInner.hpp"
 #include <GLFW/glfw3.h>
 #include <memory>
 #include <vulkan/vulkan_core.h>
@@ -61,6 +62,8 @@ namespace et{
         gameObjects.push_back(std::move(et));
         EtGameObject& etRef = gameObjects.back();
         KeyboardMovementController etController{};
+        GameState state = GameState::Login;
+        LoggerInner logger;
         auto currentTime = std::chrono::high_resolution_clock::now();
         while(!etWindow.shouldClose()){
             glfwPollEvents();
@@ -81,7 +84,11 @@ namespace et{
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
                 etRenderer.beginSwapChainRenderPass(commandBuffer);
-                simpleRenderSystem.renderGameObjects(gameObjects, frameInfo);
+                if(state == GameState::InGame) simpleRenderSystem.renderGameObjects(gameObjects, frameInfo);
+                else if(state == GameState::Login){
+                    logger.Typer(etWindow.getGLFWwindow());
+                    if(logger.loggedIn == true) state = GameState::InGame;
+                }
                 etRenderer.endSwapChainRenderPass(commandBuffer);
                 etRenderer.endFrame();
             }

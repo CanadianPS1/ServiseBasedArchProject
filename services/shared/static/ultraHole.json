@@ -1,46 +1,8 @@
 {
-    "ultraHole_1" : {
-        "id" : 6,
-        "tileset" : "ultraHole_1",
-        "width" : 10,
-        "height" : 10,
-        "tiles" : [
-            "0000000000",
-            "0110110110",
-            "0110110110",
-            "0000000000",
-            "0011101100",
-            "0011101100",
-            "0000000000",
-            "0110110110",
-            "0110110110",
-            "0000000000"
-        ],
-        "exits" : [
-            {
-                "trigger" : {"kind" : "edge",
-                            "side" : "W"},
-                "destinationRoomId" : "forest_1",
-                "spawnPoint" : {"x" : 9.9, "y" : null}
-            },{
-                "trigger" : {"kind" : "edge",
-                            "side" : "E"},
-                "destinationRoomId" : "dc_1",
-                "spawnPoint" : {"x" : 0, "y" : null}
-            },{
-                "trigger" : {"kind" : "edge",
-                            "side" : "S"},
-                "destinationRoomId" : "bottomHole_3",
-                "spawnPoint" : {"x" : null, "y" : 9.9}
-            },{
-                "trigger" : {"kind" : "edge",
-                            "side" : "N"},
-                "destinationRoomId" : "topHole_3",
-                "spawnPoint" : {"x" : null, "y" : 0}
-            }
-        ],
-        "pickupSpawns" : [
-
-        ]
+    "tileSize" : 10,
+    "tilesPerRow" : 10,
+    "tiles" : {
+        "0" : {"name" : "grass", "walkable" : true},
+        "1" : {"name" : "hole", "walkable" : false}
     }
 }
