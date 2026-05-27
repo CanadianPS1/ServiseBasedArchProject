@@ -1,0 +1,31 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    ninja-build \
+    pkg-config \
+    git \
+    vulkan-tools \
+    libvulkan-dev \
+    libglfw3-dev \
+    mesa-vulkan-drivers \
+    libx11-6 \
+    libxrandr2 \
+    libxi6 \
+    libxcursor1 \
+    libxinerama1 \
+    libglm-dev \
+    libboost-system-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY . .
+
+RUN cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+RUN cmake --build build
+
+CMD ["./build/ET"]

@@ -1,0 +1,5 @@
+{
+    "tileSize" : 10,
+    "tilesPerRow" : 10,
+    "tiles" : {"0" : {"name" : "grass", "walkable" : true}}
+}

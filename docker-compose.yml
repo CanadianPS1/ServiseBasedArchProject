@@ -1,0 +1,61 @@
+# This is for testing purposes only.
+
+version: '3.9'
+
+services:
+
+  mongo:
+    image: mongo:latest
+    container_name: et-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: et_game
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: et-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  auth-service:
+    build: ./services/auth_service
+    container_name: et-auth-service
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+      - rabbitmq
+
+    env_file:
+      - ./services/auth_service/.env
+  gui-service:
+    build: ./services/gui_service
+    container_name: et-gui-service
+    environment:
+      - DISPLAY=${DISPLAY}
+      - NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    devices:
+      - /dev/dri:/dev/dri
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    stdin_open: true
+    tty: true
+    restart: always
+    ports:
+      - "8002:8002"
+    depends_on:
+      - auth-service
