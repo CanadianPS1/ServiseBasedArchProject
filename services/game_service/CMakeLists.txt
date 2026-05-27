@@ -47,7 +47,24 @@ set(USE_ZLIB OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(nlohmann_json spdlog httplib ixwebsocket)
 
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(RABBITMQ REQUIRED librabbitmq)
+pkg_check_modules(RABBITMQ REQUIRED IMPORTED_TARGET librabbitmq)
+
+find_package(Boost REQUIRED COMPONENTS chrono system)
+
+FetchContent_Declare(
+    simpleamqpclient
+    GIT_REPOSITORY https://github.com/alanxz/SimpleAmqpClient.git
+    GIT_TAG v2.5.1
+)
+
+set(BUILD_SHARED_LIBS_PREV ${BUILD_SHARED_LIBS})
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ENABLE_SSL_SUPPORT OFF CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(simpleamqpclient)
+
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_PREV} CACHE BOOL "" FORCE)
 
 file(GLOB_RECURSE MODELS_SOURCES CONFIGURE_DEPENDS "models/*.cpp")
 file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS "engine/*.cpp")
@@ -60,7 +77,7 @@ add_executable(et_game_service
 
 target_include_directories(et_game_service PRIVATE
     ${CMAKE_SOURCE_DIR}
-    ${RABBITMQ_INCLUDE_DIRS}
+    ${simpleamqpclient_SOURCE_DIR}/src
 )
 
 target_link_libraries(et_game_service PRIVATE
@@ -68,10 +85,8 @@ target_link_libraries(et_game_service PRIVATE
     spdlog::spdlog
     httplib::httplib
     ixwebsocket
-    ${RABBITMQ_LIBRARIES}
+    SimpleAmqpClient
+    PkgConfig::RABBITMQ
+    Boost::chrono
+    Boost::system
 )
-
-target_link_directories(et_game_service PRIVATE
-    ${RABBITMQ_LIBRARY_DIRS}
-)
-

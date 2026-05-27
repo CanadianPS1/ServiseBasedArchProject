@@ -8,11 +8,12 @@
 namespace et_game {
 
 using Json = nlohmann::json;
-using InputHandlerFn = void(*)(GameState&, const Json&);
+using InputHandlerFn = void(*)(GameState&, const World&, const Json&);
 
-void dispatch_game_event(GameState& game_state, const Json& json_payload);
+void dispatch_game_event(GameState& game_state, const World& world, const Json& json_payload);
 
-void handle_move_event(GameState& game_state, const Json& json_payload);
+void handle_move_event(GameState& game_state, const World& world, const Json& json_payload);
+void handle_consume_candy_event(GameState& game_state, const World& world, const Json& json_payload);
 
 } // namespace et_game
 

@@ -1,4 +1,5 @@
 #include <string>
+#include <algorithm>
 #include <unordered_map>
 
 #include <spdlog/spdlog.h>
@@ -7,15 +8,12 @@
 
 namespace et_game {
 
-namespace {
-
-const std::unordered_map<std::string, InputHandlerFn> HANDLERS = {
+const static std::unordered_map<std::string, InputHandlerFn> HANDLERS = {
     {"input_move", &handle_move_event},
+    {"input_consume_candy", &handle_consume_candy_event},
 };
 
-} // anonymous namespace
-
-void dispatch_game_event(GameState& game_state, const Json& json_payload) {
+void dispatch_game_event(GameState& game_state, const World& world, const Json& json_payload) {
     if(!json_payload.contains("type")) {
         spdlog::warn("Game event missing 'type' field!");
         return;
@@ -28,10 +26,11 @@ void dispatch_game_event(GameState& game_state, const Json& json_payload) {
         return;
     }
 
-    it->second(game_state, json_payload);
+    it->second(game_state, world, json_payload);
 }
 
-void handle_move_event(GameState& game_state, const Json& json_payload) {
+void handle_move_event(GameState& game_state, const World& world, const Json& json_payload) {
+    (void) world;
     const std::string direction = json_payload.value("direction", "");
     const bool pressed = json_payload.value("pressed", false);
 
@@ -40,6 +39,24 @@ void handle_move_event(GameState& game_state, const Json& json_payload) {
     else if (direction == "E") game_state.input_state.move_east  = pressed;
     else if (direction == "W") game_state.input_state.move_west  = pressed;
     else spdlog::warn("Unknown direction '{}' in input_move", direction);
+}
+
+void handle_consume_candy_event(GameState& game_state, const World& world, const Json& json_payload) {
+    (void) json_payload;
+    if(!game_state.is_playing()) {
+        return;
+    }
+
+    if(game_state.candy_count <= 0) {
+        spdlog::debug("Ignoring input_consume_candy: no candy available");
+        return;
+    }
+
+    game_state.candy_count--;
+    game_state.energy = std::min(
+        game_state.energy + world.config.energy_per_candy,
+        world.config.starting_energy
+    );
 }
 
 } // namespace et_game

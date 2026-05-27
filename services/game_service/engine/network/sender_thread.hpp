@@ -3,7 +3,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include "engine/network/output_queue.hpp"
+#include "engine/util/concurrent_queue.hpp"
 #include "engine/network/websocket_server.hpp"
 
 namespace et_game {
@@ -12,9 +12,10 @@ inline void run_sender_thread(WebsocketServer& websocket_server, OutputQueue& ou
     spdlog::info("Sender thread starting...");
 
     while(true) {
-        auto msg = output_queue.wait_and_pop();
+        auto msg = output_queue.pop();
         if(!msg.has_value()) {
             spdlog::info("Sender thread shutting down...");
+            break;
         }
 
         websocket_server.send_msg_to_curr(*msg);

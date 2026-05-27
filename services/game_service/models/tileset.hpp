@@ -11,17 +11,18 @@
 namespace et_game {
 
 struct TileDef {
-    bool is_walkable = false;
-    std::string display_name = "Unknown Tile";
+    bool is_walkable{false};
+    std::string display_name{"Unknown Tile"};
 };
 
 struct Tileset {
-    TilesetName name;
-    int tile_size = 0;
-    int tiles_per_row = 0;
+    TilesetName name{};
+    int tile_size{};
+    int tiles_per_row{};
 
-    std::unordered_map<TileId, TileDef> tile_defs;
+    std::unordered_map<TileId, TileDef> tile_defs{};
 
+public:
     const TileDef& get_tiledef_by_id(TileId id) const {
         auto it = tile_defs.find(id);
         if (it == tile_defs.end()) {

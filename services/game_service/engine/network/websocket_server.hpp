@@ -6,13 +6,13 @@
 
 #include <ixwebsocket/IXWebSocketServer.h>
 
-#include "engine/network/input_queue.hpp"
+#include "engine/util/concurrent_queue.hpp"
 
 namespace et_game {
 
 class WebsocketServer {
 public:
-    WebsocketServer(std::uint16_t port, InputQueue& InputQueue);
+    WebsocketServer(std::uint16_t port, InputQueue& input_queue);
 
     void run();
 

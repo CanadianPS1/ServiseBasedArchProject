@@ -134,7 +134,7 @@ void WebsocketServer::on_open_handler(ConnectionPtr conn, WebSocketRef websocket
     }
 
     spdlog::info("Client accepted: id={}, userId={}, mode={}", client_id, user_id, mode);
-    _input_queue.push(ConnectEvent{client_id, user_id, mode});
+    _input_queue.push(ConnectEvent{user_id, client_id, mode});
 }
 
 void WebsocketServer::on_close_handler(ConnectionPtr conn, WebSocketRef websocket, MessagePtr msg) {

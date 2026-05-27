@@ -34,10 +34,10 @@ bool handle_exit_transitions(
     Direction crossed{};
     bool any_crossed{false};
 
-    if(player_pos.y < 0.0f) { crossed = Direction::North; any_crossed = true; }
+    if(player_pos.y < 0.0f)                                  { crossed = Direction::North; any_crossed = true; }
     else if(player_pos.y >= static_cast<float>(room.height)) { crossed = Direction::South; any_crossed = true; }
-    else if(player_pos.x < 0.0f) { crossed = Direction::West; any_crossed = true; }
-    else if(player_pos.x >= static_cast<float>(room.width)) { crossed = Direction::East; any_crossed = true; }
+    else if(player_pos.x < 0.0f)                             { crossed = Direction::West; any_crossed = true; }
+    else if(player_pos.x >= static_cast<float>(room.width))  { crossed = Direction::East; any_crossed = true; }
 
     if(!any_crossed) { 
         return false; 
@@ -45,10 +45,11 @@ bool handle_exit_transitions(
 
     const Exit* exit = room.find_exit_on_side(crossed);
     if(!exit) { 
+        // TODO: Remove once tile collision is implemented
         if(player_pos.x < 0) { player_pos.x = 0; }
         if(player_pos.y < 0) { player_pos.y = 0; }
-        if(player_pos.x >= room.width)  { player_pos.x = room.width - 0.0001f; }
-        if(player_pos.y >= room.height) { player_pos.y = room.width - 0.0001f; }
+        if(player_pos.x >= room.width)  { player_pos.x = room.width  - 0.0001f; }
+        if(player_pos.y >= room.height) { player_pos.y = room.height - 0.0001f; }
 
         return false; 
     }
@@ -60,18 +61,6 @@ bool handle_exit_transitions(
     output_queue.push(build_room_loaded(world, game_state, opposite_direction(crossed)));
     return true;
 }
-
-/*
-This is what I was talking about earlier with spdlog with warnings that resolve after I rebuild. Is cmake hiding warnings or something the second time?
-
-
-
-Here's the current code, if it's all good give me some testing inputs and things to test to make sure everything is working correctly. 
-
-
-
-Also, do we really need to clamp the value if there's no exit? Wouldn't tile collision detect that? I mean, we can keep it, but I was just wondering if my thinking was correct or not. I guess we need it for now since we have no tile collision detection at the moment, but if that's the case then it should've been mentioned that this clamping is temporary
-*/
 
 void handle_pickup_collection(GameState& game_state, const World& world) {
     if(!game_state.is_playing()) { return; }

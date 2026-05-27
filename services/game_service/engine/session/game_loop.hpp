@@ -1,10 +1,9 @@
 #ifndef ET_GAME_GAME_LOOP_HPP
 #define ET_GAME_GAME_LOOP_HPP
 
-#include "engine/state/game_state.hpp"
-#include "engine/network/input_queue.hpp"
-#include "engine/network/output_queue.hpp"
 #include "models/world.hpp"
+#include "engine/state/game_state.hpp"
+#include "engine/util/concurrent_queue.hpp"
 
 namespace et_game {
 

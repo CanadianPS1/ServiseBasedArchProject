@@ -1,9 +1,9 @@
 #ifndef ET_GAME_GAME_LOGIC_HPP
 #define ET_GAME_GAME_LOGIC_HPP
 
-#include "engine/state/game_state.hpp"
-#include "engine/network/output_queue.hpp"
 #include "models/world.hpp"
+#include "engine/state/game_state.hpp"
+#include "engine/util/concurrent_queue.hpp"
 
 namespace et_game {
 

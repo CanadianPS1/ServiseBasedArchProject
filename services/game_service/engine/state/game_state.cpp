@@ -46,9 +46,15 @@ GameState::GameState(const std::string& user_id, const Json& save_json)
     energy = save_json.at("energy").get<float>();
     candy_count = save_json.at("candyCount").get<int>();
 
-    if(save_json.contains("collectedPhonePieces")) {
-        for(const auto& piece : save_json.at("collectedPhonePieces")) {
+    if(save_json.contains("phonePiecesCollected")) {
+        for(const auto& piece : save_json.at("phonePiecesCollected")) {
             collected_phone_pieces.push_back(piece.get<std::string>());
+        }
+    }
+    
+    if(save_json.contains("collectedPickups")) {
+        for(const auto& pickup_id : save_json.at("collectedPickups")) {
+            collected_pickups.insert(pickup_id.get<std::string>());
         }
     }
 
@@ -64,11 +70,23 @@ GameState::GameState(const std::string& user_id, const Json& save_json)
     }
 
     spdlog::info(
-        "Deserialized save for user '{}': room='{}', pos=({}, {}), energy={}, candy={}, pieces={}",
+        "Deserialized save for user '{}': room='{}', pos=({}, {}), energy={}, candy={}, pieces={}, depleted_pickups={}",
         user_id, player.current_room_id,
         player.local_pos.x, player.local_pos.y,
-        energy, candy_count, collected_phone_pieces.size()
+        energy, candy_count, collected_phone_pieces.size(), collected_pickups.size()
     );
+}
+
+Json GameState::to_json() const {
+    Json json{};
+
+    json["player"] = {
+        {"currentRoomId", player.current_room_id},
+        {"localX", player.local_pos.x},
+        {"localY", player.local_pos.y}
+    };
+
+    return json;
 }
 
 } // namespace et_game

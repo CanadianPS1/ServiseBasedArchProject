@@ -1,14 +1,24 @@
 #include <format>
+#include <cstdlib>
+
 #include <httplib.h>
 #include <spdlog/spdlog.h>
 
-#include "engine/network/save_client.hpp"
+#include "engine/save/save_client.hpp"
 
 namespace et_game {
 
 namespace {
-constexpr const char *AUTH_HOST = "auth_service";
-constexpr int AUTH_PORT = 8000;
+
+const std::string AUTH_HOST = []{
+    const char *env_auth_host = std::getenv("AUTH_HOST");
+    return env_auth_host ? std::string(env_auth_host) : "auth_service";
+}();
+
+const int AUTH_PORT = []{
+    const char *env_auth_port = std::getenv("AUTH_PORT");
+    return env_auth_port ? std::atoi(env_auth_port) : 8000;
+}();
 
 constexpr int CONNECTION_TIMEOUT_SEC = 2;
 constexpr int READ_TIMEOUT_SEC = 2;
@@ -22,7 +32,7 @@ std::optional<Json> fetch_save_json(const std::string& user_id) {
     client.set_connection_timeout(CONNECTION_TIMEOUT_SEC);
     client.set_read_timeout(READ_TIMEOUT_SEC);
 
-    auto res = client.Get(("/save/" + user_id).c_str());
+    auto res = client.Get(("/get_game_state/" + user_id).c_str());
     if(!res) {
         throw SaveClientError(std::format(
             "Failed to fetch save for '{}'! Network error: {}",

@@ -7,11 +7,11 @@
 #include <nlohmann/json.hpp>
 
 #include "engine/util/visitor.hpp"
-#include "engine/session/game_loop.hpp"
-#include "engine/simulation/game_logic.hpp"
+#include "engine/save/save_client.hpp"
 #include "engine/state/game_state.hpp"
-#include "engine/network/save_client.hpp"
+#include "engine/session/game_loop.hpp"
 #include "engine/events/input_event.hpp"
+#include "engine/simulation/game_logic.hpp"
 #include "engine/protocol/message_builders.hpp"
 #include "engine/events/game_event_handlers.hpp"
 
@@ -52,12 +52,12 @@ void handle_disconnect(const DisconnectEvent& disconnect_event, std::optional<Ga
     game_state.reset();
 }
 
-void handle_game_event(const GameEvent& game_event, std::optional<GameState>& game_state) {
+void handle_game_event(const GameEvent& game_event, const World& world, std::optional<GameState>& game_state) {
     if(!game_state.has_value()) {
         return;
     }
 
-    dispatch_game_event(*game_state, game_event.payload);
+    dispatch_game_event(*game_state, world, game_event.payload);
 }
 
 void tick(
@@ -120,7 +120,7 @@ void run_game_loop(
                 std::visit(Overloaded {
                     [&](const ConnectEvent& connect_event) { handle_connect(connect_event, world, game_state, output_queue); },
                     [&](const DisconnectEvent& disconnect_event) { handle_disconnect(disconnect_event, game_state); },
-                    [&](const GameEvent& game_event) { handle_game_event(game_event, game_state); }
+                    [&](const GameEvent& game_event) { handle_game_event(game_event, world, game_state); }
                     }, *event);
             }
 

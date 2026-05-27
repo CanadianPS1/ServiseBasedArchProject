@@ -4,6 +4,7 @@
 #include <string>
 #include <optional>
 #include <stdexcept>
+
 #include <nlohmann/json.hpp>
 
 namespace et_game {

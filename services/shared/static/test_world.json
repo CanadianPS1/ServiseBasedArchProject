@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "config": {
     "startingEnergy": 100.0,
-    "energyDrainPerSecond": 0.5,
+    "energyDrainPerSecond": 0.25,
     "energyPerCandy": 25.0,
     "startRoomId": "house_01",
     "startSpawn": { "x": 2, "y": 2 },

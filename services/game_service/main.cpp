@@ -4,10 +4,9 @@
 #include <spdlog/spdlog.h>
 
 #include "engine/session/game_loop.hpp"
-#include "engine/network/input_queue.hpp"
-#include "engine/network/output_queue.hpp"
 #include "engine/world/world_loader.hpp"
 #include "engine/network/sender_thread.hpp"
+#include "engine/util/concurrent_queue.hpp"
 #include "engine/network/websocket_server.hpp"
 
 int main() {

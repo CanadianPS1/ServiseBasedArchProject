@@ -19,7 +19,6 @@ enum class GameStatus {
     Won,
     Lost,
     Playing,
-    Paused,
 };
 
 struct PlayerState {
@@ -50,17 +49,21 @@ struct GameState {
 
     InputState input_state;
 
+public:
     GameState() = default;
 
     GameState(const std::string& user_id, const World& world);
     GameState(const std::string& user_id, const Json& save_json);
 
+    Json to_json() const;
+
+public:
     bool is_playing() const {
         return status == GameStatus::Playing;
     }
 
     bool is_resumable() const {
-        return status == GameStatus::Playing || status == GameStatus::Paused;
+        return status == GameStatus::Playing;
     }
 
     bool is_pickup_active(const PickupId& pickup_id) const {
