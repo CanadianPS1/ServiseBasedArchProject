@@ -1,4 +1,3 @@
-#pragma once
 #include "LoggerInner.hpp"
 #include "WebSockets.hpp"
 #include "../include/httplib/httplib.h"

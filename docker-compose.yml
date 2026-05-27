@@ -22,7 +22,7 @@ services:
       - "15672:15672"
 
   auth-service:
-    build: ./auth-service
+    build: ./services/auth_service
     container_name: et-auth-service
     restart: always
     ports:
@@ -32,4 +32,12 @@ services:
       - rabbitmq
 
     env_file:
-      - ./auth-service/.env
+      - ./auth_service/.env
+  gui-service:
+    build: ./services/gui_service
+    container_name: et-gui-service
+    restart: always
+    ports:
+      - "8002:8002"
+    depends_on:
+      - auth-service
