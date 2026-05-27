@@ -32,10 +32,28 @@ services:
       - rabbitmq
 
     env_file:
-      - ./auth_service/.env
+      - ./services/auth_service/.env
   gui-service:
     build: ./services/gui_service
     container_name: et-gui-service
+    environment:
+      - DISPLAY=${DISPLAY}
+      - NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    devices:
+      - /dev/dri:/dev/dri
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    stdin_open: true
+    tty: true
     restart: always
     ports:
       - "8002:8002"
