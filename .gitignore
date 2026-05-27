@@ -6,6 +6,15 @@ build/
 *.so
 *.dylib
 
+# Engine restructure rollback snapshot (local only, not committed)
+services/game_service/engine_restructure_snapshot_2026-05-25/
+
+# Misc stuff
+.cache/
+engine_restructure_snapshot_*/
+build/
+compile_commands.json
+
 # CMake
 CMakeCache.txt
 CMakeFiles/
