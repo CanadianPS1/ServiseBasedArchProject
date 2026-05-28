@@ -35,19 +35,19 @@ struct InputState {
 };
 
 struct GameState {
-    std::string user_id;
+    std::string user_id{};
 
-    PlayerState player;
+    PlayerState player{};
     float energy = 0.0f;
 
-    std::vector<ItemTypeId> collected_phone_pieces;
-    int candy_count = 0;
+    std::vector<ItemTypeId> collected_phone_pieces{};
+    int candy_count{};
 
-    std::unordered_set<PickupId> collected_pickups;
+    std::unordered_set<PickupId> collected_pickups{};
 
     GameStatus status = GameStatus::Playing;
 
-    InputState input_state;
+    InputState input_state{};
 
 public:
     GameState() = default;

@@ -31,34 +31,34 @@ GameState::GameState(const std::string& user_id, const World& world)
     );
 }
 
-GameState::GameState(const std::string& user_id, const Json& save_json) 
+GameState::GameState(const std::string& user_id, const Json& json) 
 : user_id(user_id)
 {
-    if(!save_json.contains("player")) {
-        throw std::runtime_error("Save JSON missing 'player' field!");
+    if(!json.contains("player")) {
+        throw std::runtime_error("Save game_state_json missing 'player' field!");
     }
 
-    const auto& player_json = save_json.at("player");
-    player.current_room_id = player_json.at("currentRoomId").get<std::string>();
-    player.local_pos.x = player_json.at("localX").get<float>();
-    player.local_pos.y = player_json.at("localY").get<float>();
+    const auto& player_game_state_json = json.at("player");
+    player.current_room_id = player_game_state_json.at("currentRoomId").get<std::string>();
+    player.local_pos.x = player_game_state_json.at("localX").get<float>();
+    player.local_pos.y = player_game_state_json.at("localY").get<float>();
 
-    energy = save_json.at("energy").get<float>();
-    candy_count = save_json.at("candyCount").get<int>();
+    energy = json.at("energy").get<float>();
+    candy_count = json.at("candyCount").get<int>();
 
-    if(save_json.contains("phonePiecesCollected")) {
-        for(const auto& piece : save_json.at("phonePiecesCollected")) {
+    if(json.contains("phonePiecesCollected")) {
+        for(const auto& piece : json.at("phonePiecesCollected")) {
             collected_phone_pieces.push_back(piece.get<std::string>());
         }
     }
     
-    if(save_json.contains("collectedPickups")) {
-        for(const auto& pickup_id : save_json.at("collectedPickups")) {
+    if(json.contains("collectedPickups")) {
+        for(const auto& pickup_id : json.at("collectedPickups")) {
             collected_pickups.insert(pickup_id.get<std::string>());
         }
     }
 
-    const std::string status_str = save_json.value("status", "playing");
+    const std::string status_str = json.value("status", "playing");
 
     auto it = STATUSES.find(status_str);
     if (it == STATUSES.end()) {
@@ -78,15 +78,30 @@ GameState::GameState(const std::string& user_id, const Json& save_json)
 }
 
 Json GameState::to_json() const {
-    Json json{};
+    Json game_state_json{};
 
-    json["player"] = {
+    game_state_json["player"] = {
         {"currentRoomId", player.current_room_id},
         {"localX", player.local_pos.x},
         {"localY", player.local_pos.y}
     };
 
-    return json;
+    game_state_json["energy"] = energy;
+    game_state_json["candyCount"] = candy_count;
+    game_state_json["phonePiecesCollected"] = collected_phone_pieces;
+    
+    game_state_json["collectedPickups"] = Json::array();
+    for(const auto& id: collected_pickups) {
+        game_state_json["collectedPickups"].push_back(id);
+    }
+
+    switch (status) {
+        case GameStatus::Playing: game_state_json["status"] = "playing"; break;
+        case GameStatus::Won:     game_state_json["status"] = "won"; break;
+        case GameStatus::Lost:    game_state_json["status"] = "lost"; break;
+    }
+
+    return game_state_json;
 }
 
 } // namespace et_game
