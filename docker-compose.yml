@@ -1,12 +1,10 @@
-version: '3.9'
-
 networks:
   et-network:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.19.0.0/16
-          gateway: 172.19.0.1
+        - subnet: 10.200.0.0/24
+          gateway: 10.200.0.1
 
 volumes:
   mongo-data:
@@ -91,8 +89,8 @@ services:
     build: ./services/auth_service
     container_name: et-auth-service
     restart: always
-    expose:
-      - "8000"
+    ports:
+      - "8000:8000"
     depends_on:
       mongo:
         condition: service_healthy
@@ -115,8 +113,8 @@ services:
     build: ./services/game_service
     container_name: et-game-service
     restart: always
-    expose:
-      - "8001"
+    ports:
+      - "8001:8001"
     environment:
       AUTH_HOST: auth-service
       AUTH_PORT: 8000
