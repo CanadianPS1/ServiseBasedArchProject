@@ -166,5 +166,6 @@ services:
     restart: always
     depends_on:
       - game-service
+      - auth-service
     networks:
       - et-network
