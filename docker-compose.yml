@@ -23,7 +23,7 @@ services:
     read_only: true
     command:
       - "-listenip=0.0.0.0"
-      - "-allowfrom=172.19.0.0/16"
+      - "-allowfrom=10.200.0.0/24"
       - "-allowGET=^/v1\\.[0-9]+/(version|info|events|containers).*"
       - "-watchdoginterval=3600"
       - "-stoponwatchdog"

@@ -3,7 +3,6 @@ from app.db import db
 class SaveService:
     @staticmethod
     async def get_save(user_id: str):
-
         save = await db.saves.find_one(
             {"userId": user_id},
             {"_id": 0}
@@ -13,7 +12,6 @@ class SaveService:
 
     @staticmethod
     async def save_exists(user_id: str):
-
         save = await db.saves.find_one(
             {"userId": user_id},
             {
@@ -27,7 +25,6 @@ class SaveService:
 
     @staticmethod
     async def delete_save(user_id: str):
-
         result = await db.saves.delete_one(
             {"userId": user_id}
         )

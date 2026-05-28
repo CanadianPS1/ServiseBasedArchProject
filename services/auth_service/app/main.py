@@ -9,14 +9,12 @@ app.include_router(router)
 
 @app.get("/")
 async def root():
-
     return {
         "message": "Auth Save Service Running"
     }
 
 @app.on_event("startup")
 async def startup_event():
-
     await create_indexes()
 
     asyncio.create_task(
