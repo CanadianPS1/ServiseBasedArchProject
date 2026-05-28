@@ -7,6 +7,7 @@
 #include <vector>
 #include "../include/nlohmann/json.hpp"
 namespace et{
+    static bool enterHeld = false;
     void LoggerInner::Typer(GLFWwindow* window){
         if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) name.push_back("q");
         if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) name.push_back("w");
@@ -34,19 +35,26 @@ namespace et{
         if(glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) name.push_back("b");
         if(glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) name.push_back("n");
         if(glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) name.push_back("m");
-        if(glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS){
-            std::string namestd = "";
+        if(glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS && !enterHeld){
+            enterHeld = true;
+            std::string namestd = "lol";
             for(int i = 0; i < name.size(); i++) namestd += name[i];
             std::cout<<namestd<<std::endl;
             httplib::Client client(AUTH_HOST, AUTH_PORT);
             client.set_connection_timeout(CONNECTION_TIMEOUT_SEC);
             client.set_read_timeout(READ_TIMEOUT_SEC);
             auto res = client.Get(("/get_game_state/" + namestd).c_str());
-            if(res->status == 404) WebSockets::Connect("localhost", "8001", "/game?"+ namestd + "&mode=new");
-            else WebSockets::Connect("localhost", "8001", "/game?"+ namestd + "&mode=continue");
+            if(!res){
+                std::cerr<<"HTTP request failed"<<std::endl;
+                return;
+            }
+            std::string endpoint = "/game?userId=" + namestd + "&mode=new";
+            if(res->status == 404) WebSockets::Connect("game-service","8001",endpoint);
+            else WebSockets::Connect("game-service","8001","/game?userId="+namestd+"&mode=continue");
             try{auto json = nlohmann::json::parse(res->body);}
             catch(const nlohmann::json::parse_error& e){std::cerr<<("Failed to parse save for '{}': '{}'!", namestd, e.what());}
             loggedIn = true;
         }
+        if(glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_RELEASE) enterHeld = false;
     }
 }

@@ -50,7 +50,7 @@ namespace et{
             std::string body = "{"
                 "\"type\": \"input_move\","
                 "\"direction\":\"N\","
-                "\"pressed\": True,"
+                "\"pressed\": true"
             "}";
             WebSockets::Send(body);
         }
@@ -58,7 +58,7 @@ namespace et{
             std::string body = "{"
                 "\"type\": \"input_move\","
                 "\"direction\":\"S\","
-                "\"pressed\": True,"
+                "\"pressed\": true"
             "}";
             WebSockets::Send(body);
         }
@@ -66,7 +66,7 @@ namespace et{
             std::string body = "{"
                 "\"type\": \"input_move\","
                 "\"direction\":\"E\","
-                "\"pressed\": True,"
+                "\"pressed\": true"
             "}";
             WebSockets::Send(body);
         }
@@ -74,7 +74,7 @@ namespace et{
             std::string body = "{"
                 "\"type\": \"input_move\","
                 "\"direction\":\"W\","
-                "\"pressed\": True,"
+                "\"pressed\": true"
             "}";
             WebSockets::Send(body);
         }
@@ -84,49 +84,60 @@ namespace et{
             "}";
             WebSockets::Send(body);
         }
-
-
-
-
-        if(glfwGetKey(window, keys.eatCandy) == GLFW_RELEASE){
-            std::string body = "{"
-                "\"type\": \"input_consume_candy\""
-            "}";
-            WebSockets::Send(body);
+        if(!WebSockets::messages.empty()){
+            try{
+                auto msg= WebSockets::messages.front();
+                WebSockets::messages.pop();
+                auto json= nlohmann::json::parse(msg);
+                float x = json["state"]["player"]["localX"].get<float>();
+                float y = json["state"]["player"]["localY"].get<float>();
+                if(gameObject.name == "et") location = {x,6.7f, y};
+            }catch(const std::exception& e){
+                std::cerr<<"WS JSON parse error:"<<e.what()<<std::endl;
+            }
         }
 
-        if(glfwGetKey(window, keys.moveForward) == GLFW_RELEASE){
-            std::string body = "{"
-                "\"type\": \"input_move\","
-                "\"direction\":\"N\","
-                "\"pressed\": False,"
-            "}";
-            WebSockets::Send(body);
-        }
-        if(glfwGetKey(window, keys.moveBackward) == GLFW_RELEASE){
-            std::string body = "{"
-                "\"type\": \"input_move\","
-                "\"direction\":\"S\","
-                "\"pressed\": False,"
-            "}";
-            WebSockets::Send(body);
-        }
-        if(glfwGetKey(window, keys.moveRight) == GLFW_RELEASE){
-            std::string body = "{"
-                "\"type\": \"input_move\","
-                "\"direction\":\"E\","
-                "\"pressed\": False,"
-            "}";
-            WebSockets::Send(body);
-        }
-        if(glfwGetKey(window, keys.moveLeft) == GLFW_RELEASE){
-            std::string body = "{"
-                "\"type\": \"input_move\","
-                "\"direction\":\"W\","
-                "\"pressed\": False,"
-            "}";
-            WebSockets::Send(body);
-        }
+
+
+        // if(glfwGetKey(window, keys.eatCandy) == GLFW_RELEASE){
+        //     std::string body = "{"
+        //         "\"type\": \"input_consume_candy\""
+        //     "}";
+        //     WebSockets::Send(body);
+        // }
+
+        // if(glfwGetKey(window, keys.moveForward) == GLFW_RELEASE){
+        //     std::string body = "{"
+        //         "\"type\": \"input_move\","
+        //         "\"direction\":\"N\","
+        //         "\"pressed\": False,"
+        //     "}";
+        //     WebSockets::Send(body);
+        // }
+        // if(glfwGetKey(window, keys.moveBackward) == GLFW_RELEASE){
+        //     std::string body = "{"
+        //         "\"type\": \"input_move\","
+        //         "\"direction\":\"S\","
+        //         "\"pressed\": False,"
+        //     "}";
+        //     WebSockets::Send(body);
+        // }
+        // if(glfwGetKey(window, keys.moveRight) == GLFW_RELEASE){
+        //     std::string body = "{"
+        //         "\"type\": \"input_move\","
+        //         "\"direction\":\"E\","
+        //         "\"pressed\": False,"
+        //     "}";
+        //     WebSockets::Send(body);
+        // }
+        // if(glfwGetKey(window, keys.moveLeft) == GLFW_RELEASE){
+        //     std::string body = "{"
+        //         "\"type\": \"input_move\","
+        //         "\"direction\":\"W\","
+        //         "\"pressed\": False,"
+        //     "}";
+        //     WebSockets::Send(body);
+        // }
 
         
     }
