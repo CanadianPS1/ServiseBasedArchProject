@@ -9,7 +9,7 @@ import websockets
 SERVER_URL = "ws://localhost:8001/game"
 
 @asynccontextmanager
-async def session(user_id="alice", mode="new"):
+async def session(user_id="darryl", mode="new"):
     uri = f"{SERVER_URL}?userId={user_id}&mode={mode}"
     async with websockets.connect(uri) as ws:
         yield ws
@@ -113,7 +113,6 @@ async def test_walk_east_then_back():
               f"spawn=({house_msg['player']['x']}, {house_msg['player']['y']})")
 
 async def test_wall_clamping():
-    """Walk south (no exit on house_01 south edge) — should clamp."""
     print("\n=== Test: wall clamping (south edge) ===")
     async with session() as ws:
         await recv_until(ws, lambda m: m["type"] == "room_loaded")
@@ -127,15 +126,11 @@ async def test_wall_clamping():
         print(f"  PASS: player clamped at y={y:.4f}")
 
 async def test_pickup_collection():
-    """Walk to a pickup and verify it's collected."""
     print("\n=== Test: pickup collection (candy at 4,4) ===")
     async with session() as ws:
         initial = await recv_until(ws, lambda m: m["type"] == "room_loaded")
         initial_pickup_count = len(initial["room"]["activePickups"])
 
-        # Player spawns at (2, 2). Candy is at (4, 4). Move E 2 tiles, then S 2 tiles.
-        # E 2 tiles at 4 tiles/sec = 0.5s; S 2 tiles = 0.5s.
-        # Add a little margin to make sure we land on the tile.
         await move(ws, "E", 0.55)
         await asyncio.sleep(0.05)
         await move(ws, "S", 0.55)
@@ -181,13 +176,13 @@ async def test_rejection():
     async with session(user_id="alice") as ws1:
         await recv_until(ws1, lambda m: m["type"] == "room_loaded")
 
-        # Try opening a second connection
         try:
             uri = f"{SERVER_URL}?userId=bob&mode=new"
             async with websockets.connect(uri) as ws2:
                 try:
                     msg = await asyncio.wait_for(ws2.recv(), timeout=2.0)
                     print(f"  FAIL: second connection accepted, received {msg}")
+    
                 except asyncio.TimeoutError:
                     print(f"  ??? second connection opened but no message")
         except websockets.exceptions.ConnectionClosedError as e:
@@ -220,7 +215,6 @@ async def test_win_by_collecting_pieces():
     async with session() as ws:
         await recv_until(ws, lambda m: m["type"] == "room_loaded")
 
-        # House_01: walk to antenna at (6, 2). Spawn is (2, 2). Move E 4 tiles.
         await move(ws, "E", 1.05)
         await drain_recv(ws, 0.3)
 
@@ -230,15 +224,13 @@ async def test_win_by_collecting_pieces():
             lambda m: m["type"] == "room_loaded" and m["room"]["id"] == "forest_01",
             timeout=5.0
         )
+
         await ws.send(json.dumps({"type": "input_move", "direction": "E", "pressed": False}))
 
-        # Forest_01: spawn at (1, 3). Dial at (5, 2), Speaker at (7, 3).
-        # Walk E 4 tiles, then N 1 tile to land on (5, 2).
         await move(ws, "E", 1.0)
         await move(ws, "N", 0.25)
         await drain_recv(ws, 0.3)
 
-        # Walk S 1 tile, E 2 tiles to land on (7, 3).
         await move(ws, "S", 0.25)
         await move(ws, "E", 0.5)
         await drain_recv(ws, 0.3)
@@ -256,6 +248,83 @@ async def test_win_by_collecting_pieces():
             last = await drain_recv(ws, 0.2)
             print(f"    last state: {last}")
 
+async def test_collision_blocks_into_wall():
+    print("=== Test: collision blocks walking into wall ===")
+    
+    ws = await websockets.connect("ws://localhost:8001/game?userId=collision_test_1&mode=new")
+    await ws.recv()
+    
+    await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": True}))
+    
+    transition_msg = None
+    for _ in range(60):
+        msg = json.loads(await ws.recv())
+        if msg.get("type") == "room_loaded" and msg.get("room", {}).get("id") == "topHole_2":
+            transition_msg = msg
+            break
+    assert transition_msg, "Failed to transition to topHole_2"
+    
+    await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": False}))
+    
+    await ws.send(json.dumps({"type": "input_move", "direction": "E", "pressed": True}))
+    await asyncio.sleep(0.5)
+    await ws.send(json.dumps({"type": "input_move", "direction": "E", "pressed": False}))
+    
+    last_state = None
+    for _ in range(20):
+        try:
+            msg = json.loads(await asyncio.wait_for(ws.recv(), timeout=0.1))
+            if msg.get("type") == "state_update":
+                last_state = msg
+        except asyncio.TimeoutError:
+            break
+    
+    final_x = last_state["player"]["x"]
+    assert final_x < 1.0, f"Expected player to be blocked before x=1.0, got x={final_x}"
+    print(f"  ✓ Player blocked at x={final_x:.4f} (couldn't enter hole)")
+    
+    await ws.close()
+
+
+async def test_collision_slides_along_wall():
+    print("=== Test: collision slides along wall ===")
+    
+    ws = await websockets.connect("ws://localhost:8001/game?userId=collision_test_2&mode=new")
+    await ws.recv()
+    
+    await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": True}))
+    transition_msg = None
+    for _ in range(60):
+        msg = json.loads(await ws.recv())
+        if msg.get("type") == "room_loaded" and msg.get("room", {}).get("id") == "topHole_2":
+            transition_msg = msg
+            break
+    assert transition_msg, "Failed to transition to topHole_2"
+    
+    initial_y = transition_msg["player"]["y"]
+    
+    await ws.send(json.dumps({"type": "input_move", "direction": "E", "pressed": True}))
+    await asyncio.sleep(0.3)
+    await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": False}))
+    await ws.send(json.dumps({"type": "input_move", "direction": "E", "pressed": False}))
+    
+    last_state = None
+    for _ in range(20):
+        try:
+            msg = json.loads(await asyncio.wait_for(ws.recv(), timeout=0.1))
+            if msg.get("type") == "state_update":
+                last_state = msg
+        except asyncio.TimeoutError:
+            break
+    
+    final_x = last_state["player"]["x"]
+    final_y = last_state["player"]["y"]
+    assert final_x < 1.0, f"East should be blocked, but x={final_x}"
+    assert final_y < initial_y, f"North should still work, but y stayed at {final_y} (initial {initial_y})"
+    print(f"  ✓ Player slid along wall: x={final_x:.4f}, y={final_y:.4f} (initial y={initial_y})")
+    
+    await ws.close()
+
 ALL_TESTS = [
     test_initial_room_load,
     test_walk_east_to_forest,
@@ -265,7 +334,9 @@ ALL_TESTS = [
     test_consume_candy,
     test_rejection,
     test_loss_by_energy,
-    test_win_by_collecting_pieces
+    test_win_by_collecting_pieces,
+    test_collision_blocks_into_wall,
+    test_collision_slides_along_wall
 ]
 
 async def main():

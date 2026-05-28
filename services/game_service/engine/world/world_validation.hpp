@@ -28,10 +28,10 @@ private:
 
 void validate_exits(const World& world, ValidationErrors& errors);
 void validate_config(const World& world, ValidationErrors& errors);
-void validate_required_pieces(const World& world, ValidationErrors& errors);
+void validate_tilesets(const World& world, ValidationErrors& errors);
 void validate_pickup_spawns(const World& world, ValidationErrors& errors);
+void validate_required_pieces(const World& world, ValidationErrors& errors);
 void validate_room_reachability(const World& world, ValidationErrors& errors);
-
 } // namespace et_game::detail
 
 #endif

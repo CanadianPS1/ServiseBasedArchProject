@@ -7,18 +7,72 @@
 
 namespace et_game {
 
-static constexpr float MOVE_SPEED = 4.0f; // tiles per second
+namespace {
 
-void apply_movement_event(GameState& game_state, double dt) {
+constexpr float MOVE_SPEED = 4.0f; // tiles per second
+
+bool is_tile_walkable(
+    const World& world,
+    const Room& room,
+    int tile_x,
+    int tile_y
+) {
+    if(tile_x < 0 || tile_y < 0) {
+        return false;
+    }
+
+    if(tile_x >= room.width || tile_y >= room.height) {
+        return false;
+    }
+
+    const TileId tile_id = room.tile_at(tile_x, tile_y);
+    const Tileset& tileset = world.get_tileset_by_name(room.tileset_name);
+
+    return tileset.is_walkable(tile_id);
+}
+
+} // anonymous namespace
+
+void apply_movement_event(
+    GameState& game_state,
+    const World& world,
+    double dt
+) {
     if(!game_state.is_playing()) { 
         return; 
     }
 
+    const Room& room = game_state.current_room(world);
     Vec2& player_pos = game_state.player.local_pos;
-    if(game_state.input_state.move_north) { player_pos.y -= MOVE_SPEED * dt; } 
-    if(game_state.input_state.move_south) { player_pos.y += MOVE_SPEED * dt; }
-    if(game_state.input_state.move_east)  { player_pos.x += MOVE_SPEED * dt; }
-    if(game_state.input_state.move_west)  { player_pos.x -= MOVE_SPEED * dt; }
+
+    float dx = 0.0f;
+    float dy = 0.0f;
+    if(game_state.input_state.move_north) { dy -= MOVE_SPEED  * dt; } 
+    if(game_state.input_state.move_south) { dy += MOVE_SPEED  * dt; }
+    if(game_state.input_state.move_east)  { dx  += MOVE_SPEED * dt; }
+    if(game_state.input_state.move_west)  { dx  -= MOVE_SPEED * dt; }
+
+    {
+    float new_x = player_pos.x + dx;
+        int new_tile_x  = static_cast<int>(new_x);
+        int curr_tile_y = static_cast<int>(player_pos.y);
+
+        bool is_out_of_room = new_tile_x < 0 || new_tile_x >= room.width;
+        if(is_out_of_room || is_tile_walkable(world, room, new_tile_x, curr_tile_y)) {
+            player_pos.x = new_x;
+        }
+    }
+
+    {
+        float new_y = player_pos.y + dy;
+        int curr_tile_x = static_cast<int>(player_pos.x);
+        int new_tile_y  = static_cast<int>(new_y);
+
+        bool is_out_of_room = new_tile_y < 0 || new_tile_y >= room.height;
+        if(is_out_of_room || is_tile_walkable(world, room, curr_tile_x, new_tile_y)) {
+            player_pos.y = new_y;
+        }
+    }
 }
 
 bool handle_exit_transitions(

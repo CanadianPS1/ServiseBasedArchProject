@@ -10,9 +10,13 @@
 
 namespace et_game {
 
+struct TilesetError : public std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
+
 struct TileDef {
-    bool is_walkable{false};
-    std::string display_name{"Unknown Tile"};
+    bool walkable{false};
+    std::string name{"Unknown Tile"};
 };
 
 struct Tileset {
@@ -26,14 +30,14 @@ public:
     const TileDef& get_tiledef_by_id(TileId id) const {
         auto it = tile_defs.find(id);
         if (it == tile_defs.end()) {
-            throw std::runtime_error(std::format("Tile ID {} not found in tileset '{}'", id, name));
+            throw TilesetError(std::format("Tile ID {} not found in tileset '{}'", id, name));
         }
 
         return it->second;
     }
 
     bool is_walkable(TileId id) const {
-        return get_tiledef_by_id(id).is_walkable;
+        return get_tiledef_by_id(id).walkable;
     }
 };
 

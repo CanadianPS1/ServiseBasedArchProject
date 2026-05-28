@@ -7,6 +7,7 @@
 #include <unordered_map>
 
 #include "types.hpp"
+#include "tileset.hpp"
 
 namespace et_game {
 
@@ -63,9 +64,9 @@ struct Room {
 };
 
 struct WorldConfig {
-    float starting_energy = 100.0f;
-    float energy_drain_rate = 0.5f;
-    float energy_per_candy = 25.0f;
+    float starting_energy{};
+    float energy_drain_rate{};
+    float energy_per_candy{};
 
     Vec2 et_spawn_pos{};
     RoomId starting_room_id{};
@@ -77,6 +78,7 @@ struct World {
     WorldConfig config{};
 
     std::unordered_map<RoomId, Room> rooms{};
+    std::unordered_map<TilesetName, Tileset> tilesets{};
     std::unordered_map<ItemTypeId, PickupDef> pickup_defs{};
 
     const Room& get_room_by_id(const RoomId& room_id) const {
@@ -96,7 +98,17 @@ struct World {
 
         return it->second;
     }
+
+    const Tileset& get_tileset_by_name(const TilesetName& tileset_name) const {
+        auto it = tilesets.find(tileset_name);
+        if(it == tilesets.end()) {
+            throw std::out_of_range(std::format("Tileset with name '{}' not found!", tileset_name));
+        }
+
+        return it->second;
+    }
 };
 
 } // namespace et_game
+
 #endif
