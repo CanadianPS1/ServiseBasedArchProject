@@ -5,6 +5,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include "models/tileset.hpp"
+
 #include "engine/session/game_loop.hpp"
 #include "engine/world/world_loader.hpp"
 #include "engine/save/save_publisher.hpp"
@@ -29,6 +31,7 @@ std::uint16_t env_var_or(const char *env_var_name, const std::uint16_t default_f
 
 int main() {
     const std::string world_path = detail::env_var_or("WORLD_JSON_PATH", "../shared/static/world.json");
+    const std::string tileset_dir_path = detail::env_var_or("TILESET_DIR_PATH", "../shared/tileset_metadata");
 
     const std::string   rabbitmq_host = detail::env_var_or("RABBITMQ_HOST", "0.0.0.0");
     const std::uint16_t rabbitmq_port = detail::env_var_or("RABBITMQ_PORT", 5672);
@@ -38,10 +41,14 @@ int main() {
 
     et_game::World world{};
     try {
-        world = et_game::load_world(world_path);
+        world = et_game::load_world(world_path, tileset_dir_path);
     }
     catch(const et_game::WorldLoadError& e) {
         spdlog::error("Failed to load world: {}", e.what());
+        return EXIT_FAILURE;
+    }
+    catch(const et_game::TilesetError& e) {
+        spdlog::error("Failed to load tileset: {}", e.what());
         return EXIT_FAILURE;
     }
     catch(const std::exception& e) {

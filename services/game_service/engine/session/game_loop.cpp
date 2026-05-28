@@ -78,7 +78,7 @@ void tick(
         return;
     }
     
-    apply_movement_event(game_state, dt);
+    apply_movement_event(game_state, world, dt);
 
     if(handle_exit_transitions(game_state, world, output_queue, save_queue)) {
         return; 

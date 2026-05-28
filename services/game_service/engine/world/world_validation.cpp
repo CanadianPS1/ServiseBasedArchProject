@@ -51,6 +51,38 @@ void validate_config(const World& world, ValidationErrors& errors) {
     }
 }
 
+
+void validate_tilesets(const World& world, ValidationErrors& errors) {
+    for(const auto& [room_id, room] : world.rooms) {
+        auto tileset_it = world.tilesets.find(room.tileset_name);
+        if(tileset_it == world.tilesets.end()) {
+            errors.add(std::format(
+                "Room '{}' references undefined tileset '{}'",
+                room_id, room.tileset_name
+            ));
+    
+            continue;
+        }
+
+        const Tileset& tileset = tileset_it->second;
+        std::unordered_set<TileId> reported_tile_ids{};
+
+        for(int y = 0; y < room.height; ++y) {
+            for(int x = 0; x < room.width; ++x) {
+                TileId tile_id = room.tile_at(x, y);
+                if(tileset.tile_defs.contains(tile_id)) { continue; }
+                if(reported_tile_ids.contains(tile_id)) { continue; }
+
+                reported_tile_ids.insert(tile_id);
+                errors.add(std::format(
+                    "Room '{}' uses tile ID {} at position ({}, {}) that is not defined in tileset '{}'",
+                    room_id, tile_id, x, y, room.tileset_name
+                ));
+            }
+        }
+    }
+}
+
 void validate_required_pieces(const World& world, ValidationErrors& errors) {
     for(const auto& required_piece_id : world.config.required_phone_pieces) {
         auto it = world.pickup_defs.find(required_piece_id);

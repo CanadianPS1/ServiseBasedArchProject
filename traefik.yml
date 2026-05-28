@@ -1,0 +1,22 @@
+# traefik.yml — Static configuration
+
+api:
+  dashboard: true
+  insecure: true
+
+entryPoints:
+  web:
+    address: ":80"
+
+providers:
+  docker:
+    # Connects to Docker Desktop's TCP daemon on the host.
+    # "dockerhost" is mapped to the host gateway IP via extra_hosts in docker-compose.yml.
+    # Requires: Docker Desktop → Settings → General →
+    #   "Expose daemon on tcp://localhost:2375 without TLS" → enabled
+    endpoint: "tcp://socket-proxy:2375"
+    exposedByDefault: false
+    network: servisebasedarchproject_et-network
+
+log:
+  level: INFO

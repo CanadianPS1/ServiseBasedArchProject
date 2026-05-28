@@ -7,7 +7,11 @@
 
 namespace et_game {
 
-void apply_movement_event(GameState& game_state, double dt);
+void apply_movement_event(
+    GameState& game_state,
+    const World& world,
+    double dt
+);
 
 bool handle_exit_transitions(
     GameState& game_state,

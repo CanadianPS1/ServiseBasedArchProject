@@ -1,5 +1,54 @@
+networks:
+  et-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.200.0.0/24
+          gateway: 10.200.0.1
+
+volumes:
+  mongo-data:
+  rabbitmq-data:
 
 services:
+  # ─── Docker Socket Proxy ───────────────────────────────────────────────────
+  # Exposes only the Docker API endpoints Traefik needs, over TCP.
+  # The socket mount works here because this container runs as root by default.
+  socket-proxy:
+    image: wollomatic/socket-proxy:1
+    container_name: et-socket-proxy
+    restart: always
+    # Must run as UID 0 to access /var/run/docker.sock (image has no passwd file so "root" fails)
+    user: "0:0"
+    read_only: true
+    command:
+      - "-listenip=0.0.0.0"
+      - "-allowfrom=172.19.0.0/16"
+      - "-allowGET=^/v1\\.[0-9]+/(version|info|events|containers).*"
+      - "-watchdoginterval=3600"
+      - "-stoponwatchdog"
+      - "-loglevel=DEBUG"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - et-network
+
+  # ─── Traefik (API Gateway + Service Discovery) ─────────────────────────────
+  traefik:
+    image: traefik:v3.6.1   # v3.6.1+ required: fixes Docker 29+ API v1.24 incompatibility
+    container_name: et-traefik
+    restart: always
+    ports:
+      - "80:80"       # API gateway entrypoint — all HTTP traffic routes here
+      - "8080:8080"   # Traefik dashboard → http://localhost:8080
+    depends_on:
+      - socket-proxy
+    volumes:
+      - ./traefik.yml:/traefik.yml:ro
+    networks:
+      - et-network
+
+  # ─── Infrastructure ────────────────────────────────────────────────────────
   mongo:
     image: mongo:latest
     container_name: et-mongo
@@ -13,6 +62,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - et-network
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -26,7 +79,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - et-network
 
+  # ─── Auth Service (Python / FastAPI) ───────────────────────────────────────
   auth-service:
     build: ./services/auth_service
     container_name: et-auth-service
@@ -40,7 +98,17 @@ services:
         condition: service_healthy
     env_file:
       - ./services/auth_service/.env
+    networks:
+      - et-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth-service.rule=PathPrefix(`/auth`)"
+      - "traefik.http.routers.auth-service.entrypoints=web"
+      - "traefik.http.services.auth-service.loadbalancer.server.port=8000"
+      - "traefik.http.middlewares.auth-strip.stripprefix.prefixes=/auth"
+      - "traefik.http.routers.auth-service.middlewares=auth-strip"
 
+  # ─── Game Service (C++) ────────────────────────────────────────────────────
   game-service:
     build: ./services/game_service
     container_name: et-game-service
@@ -55,6 +123,7 @@ services:
       RABBITMQ_USER: guest
       RABBITMQ_PASSWORD: guest
       WORLD_JSON_PATH: /app/shared/static/world.json
+      TILESET_DIR_PATH: /app/shared/tileset_metadata
     volumes:
       - ./services/shared:/app/shared:ro
     depends_on:
@@ -62,13 +131,25 @@ services:
         condition: service_healthy
       auth-service:
         condition: service_started
+    networks:
+      - et-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.game-service.rule=PathPrefix(`/game`)"
+      - "traefik.http.routers.game-service.entrypoints=web"
+      - "traefik.http.services.game-service.loadbalancer.server.port=8001"
+      - "traefik.http.middlewares.game-strip.stripprefix.prefixes=/game"
+      - "traefik.http.routers.game-service.middlewares=game-strip"
 
+  # ─── GUI Service (C++ / Vulkan + NVIDIA) ───────────────────────────────────
   gui-service:
     build: ./services/gui_service
     container_name: et-gui-service
     environment:
       - DISPLAY=${DISPLAY}
       - NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute
+      - AUTH_SERVICE_URL=http://traefik/auth
+      - GAME_SERVICE_URL=http://traefik/game
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
     devices:
@@ -85,3 +166,5 @@ services:
     restart: always
     depends_on:
       - game-service
+    networks:
+      - et-network

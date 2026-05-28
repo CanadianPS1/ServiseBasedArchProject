@@ -1,8 +1,5 @@
-#include <queue>
-#include <vector>
 #include <format>
 #include <fstream>
-#include <sstream>
 #include <unordered_set>
 
 #include <spdlog/spdlog.h>
@@ -11,13 +8,14 @@
 
 #include "engine/world/world_loader.hpp"
 #include "engine/world/world_parsing.hpp"
+#include "engine/world/tileset_loader.hpp"
 #include "engine/world/world_validation.hpp"
 
 namespace et_game {
 
 using Json = nlohmann::json;
 
-World load_world(const std::string& world_file_path) {
+World load_world(const std::string& world_file_path, const std::string& tileset_dir_path) {
     std::ifstream file(world_file_path);
     if(!file.is_open()) {
         throw WorldLoadError(std::format("Failed to open world file '{}'!", world_file_path));
@@ -59,11 +57,24 @@ World load_world(const std::string& world_file_path) {
         world.rooms.emplace(room_id, detail::parse_room(room_id, room_json));
     }
 
+    std::unordered_set<TilesetName> needed_tilesets{};
+    for(const auto& [_, room] : world.rooms) {
+        needed_tilesets.insert(room.tileset_name);
+    }
+
+    for(const TilesetName& tileset_name : needed_tilesets) {
+        std::string tileset_path = std::format("{}/{}.json", tileset_dir_path, tileset_name);
+        spdlog::debug("Loading tileset '{}' from '{}'", tileset_name, tileset_path);
+        world.tilesets.emplace(tileset_name, load_tileset(tileset_path, tileset_name));
+    }
+
     detail::ValidationErrors validation_errors{};
     detail::validate_config(world, validation_errors);
+    detail::validate_tilesets(world, validation_errors);
     detail::validate_required_pieces(world, validation_errors);
     detail::validate_exits(world, validation_errors);
     detail::validate_pickup_spawns(world, validation_errors);
+
     if(validation_errors.empty()) {
         detail::validate_room_reachability(world, validation_errors);
     }
@@ -80,43 +91,6 @@ World load_world(const std::string& world_file_path) {
     );
 
     return world;
-}
-
-void validate_tilesets(
-    const World& world,
-    const std::unordered_map<TilesetName, Tileset>& tilesets
-) {
-    detail::ValidationErrors errors{};
-
-    for(const auto& [room_id, room] : world.rooms) {
-        auto tileset_it = tilesets.find(room.tileset_name);
-        if(tileset_it == tilesets.end()) {
-            errors.add(std::format(
-                "Room '{}' references undefined tileset '{}'",
-                room_id, room.tileset_name
-            ));
-            continue;
-        }
-
-        const Tileset& tileset = tileset_it->second;
-        std::unordered_set<TileId> seen_tile_ids{};
-
-        for(int y = 0; y < room.height; ++y) {
-            for(int x = 0; x < room.width; ++x) {
-                TileId tile_id = room.tile_at(x, y);
-                if(tileset.tile_defs.contains(tile_id)) { continue; }
-                if(seen_tile_ids.contains(tile_id)) { continue; }
-
-                seen_tile_ids.insert(tile_id);
-                errors.add(std::format(
-                    "Room '{}' uses tile ID {} at position ({}, {}) that is not defined in tileset '{}'",
-                    room_id, tile_id, x, y, room.tileset_name
-                ));
-            }
-        }
-    }
-
-    errors.throw_if_any_error();
 }
 
 } // namespace et_game
