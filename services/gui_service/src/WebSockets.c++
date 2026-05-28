@@ -4,6 +4,7 @@ namespace et{
 	net::io_context WebSockets::ioContext{};
 	std::unique_ptr<tcp::resolver> WebSockets::resolver{};
 	std::unique_ptr<websocket::stream<tcp::socket>> WebSockets::ws{};
+    std::queue<std::string> WebSockets::messages{};
 	void WebSockets::Create(){
 		resolver = std::make_unique<tcp::resolver>(ioContext);
 		ws = std::make_unique<websocket::stream<tcp::socket>>(ioContext);
