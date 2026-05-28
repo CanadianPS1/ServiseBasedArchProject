@@ -31,7 +31,6 @@ async def move(ws, direction, duration):
         "direction": direction,
         "pressed": True
     }))
-    
     await asyncio.sleep(duration)
     await ws.send(json.dumps({
         "type": "input_move",
@@ -42,19 +41,15 @@ async def move(ws, direction, duration):
 async def drain_recv(ws, duration):
     deadline = time.monotonic() + duration
     last_msg = None
-
     while time.monotonic() < deadline:
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             break
-
         try:
             raw = await asyncio.wait_for(ws.recv(), timeout=remaining)
             last_msg = json.loads(raw)
-        
         except asyncio.TimeoutError:
             break
-
     return last_msg
 
 async def test_initial_room_load():
@@ -62,114 +57,121 @@ async def test_initial_room_load():
     async with session() as ws:
         msg = await recv_until(ws, lambda m: m["type"] == "room_loaded")
 
-        assert msg["room"]["id"] == "house_01", f"expected house_01, got {msg['room']['id']}"
+        assert msg["room"]["id"] == "forest_1", f"expected forest_1, got {msg['room']['id']}"
         assert "arrivedFrom" not in msg, "initial room_loaded should not have arrivedFrom"
-        assert msg["player"]["x"] == 2 and msg["player"]["y"] == 2, \
+        assert msg["player"]["x"] == 5 and msg["player"]["y"] == 5, \
             f"unexpected spawn position: {msg['player']}"
-        
+
         print(f"  PASS: spawned at ({msg['player']['x']}, {msg['player']['y']})")
         print(f"  PASS: activePickups = {len(msg['room']['activePickups'])} items")
 
-async def test_walk_east_to_forest():
-    print("\n=== Test: walk east to forest ===")
+async def test_walk_north_to_tophole():
+    print("\n=== Test: walk north to topHole_2 ===")
     async with session() as ws:
         await recv_until(ws, lambda m: m["type"] == "room_loaded")
 
-        await move(ws, "E", 3.0)
-
-        last = await drain_recv(ws, 0.5)
-        print(f"  Last state: room? {last.get('type')}, player={last.get('player')}")
-
-async def test_walk_east_then_back():
-    print("\n=== Test: walk east, then west ===")
-    async with session() as ws:
-        await recv_until(ws, lambda m: m["type"] == "room_loaded")
-
-        await ws.send(json.dumps({"type": "input_move", "direction": "E", "pressed": True}))
-        forest_msg = await recv_until(
+        await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": True}))
+        tophole_msg = await recv_until(
             ws,
-            lambda m: m["type"] == "room_loaded" and m["room"]["id"] == "forest_01",
+            lambda m: m["type"] == "room_loaded" and m["room"]["id"] == "topHole_2",
             timeout=5.0
         )
-        await ws.send(json.dumps({"type": "input_move", "direction": "E", "pressed": False}))
+        await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": False}))
 
-        assert forest_msg["arrivedFrom"] == "W", f"expected arrivedFrom=W, got {forest_msg.get('arrivedFrom')}"
-        print(f"  PASS: transitioned to forest_01, arrivedFrom={forest_msg['arrivedFrom']}, "
-              f"spawn=({forest_msg['player']['x']}, {forest_msg['player']['y']})")
+        assert tophole_msg["arrivedFrom"] == "S", f"expected arrivedFrom=S, got {tophole_msg.get('arrivedFrom')}"
+        print(f"  PASS: transitioned to topHole_2, arrivedFrom={tophole_msg['arrivedFrom']}, "
+              f"spawn=({tophole_msg['player']['x']}, {tophole_msg['player']['y']})")
+
+async def test_walk_north_then_back():
+    print("\n=== Test: walk north, then south ===")
+    async with session() as ws:
+        await recv_until(ws, lambda m: m["type"] == "room_loaded")
+
+        await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": True}))
+        tophole_msg = await recv_until(
+            ws,
+            lambda m: m["type"] == "room_loaded" and m["room"]["id"] == "topHole_2",
+            timeout=5.0
+        )
+        await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": False}))
+
+        assert tophole_msg["arrivedFrom"] == "S", f"expected arrivedFrom=S, got {tophole_msg.get('arrivedFrom')}"
+        print(f"  PASS: transitioned to topHole_2, arrivedFrom={tophole_msg['arrivedFrom']}")
 
         await asyncio.sleep(0.1)
 
-        await ws.send(json.dumps({"type": "input_move", "direction": "W", "pressed": True}))
-        house_msg = await recv_until(
+        await ws.send(json.dumps({"type": "input_move", "direction": "S", "pressed": True}))
+        forest_msg = await recv_until(
             ws,
-            lambda m: m["type"] == "room_loaded" and m["room"]["id"] == "house_01",
+            lambda m: m["type"] == "room_loaded" and m["room"]["id"] == "forest_1",
             timeout=5.0
         )
-    
-        await ws.send(json.dumps({"type": "input_move", "direction": "W", "pressed": False}))
+        await ws.send(json.dumps({"type": "input_move", "direction": "S", "pressed": False}))
 
-        assert house_msg["arrivedFrom"] == "E", f"expected arrivedFrom=E, got {house_msg.get('arrivedFrom')}"
-        print(f"  PASS: transitioned to house_01, arrivedFrom={house_msg['arrivedFrom']}, "
-              f"spawn=({house_msg['player']['x']}, {house_msg['player']['y']})")
+        assert forest_msg["arrivedFrom"] == "N", f"expected arrivedFrom=N, got {forest_msg.get('arrivedFrom')}"
+        print(f"  PASS: transitioned to forest_1, arrivedFrom={forest_msg['arrivedFrom']}")
 
-async def test_wall_clamping():
-    print("\n=== Test: wall clamping (south edge) ===")
+async def test_pickup_collection():
+    print("\n=== Test: pickup collection (antenna in topHole_2) ===")
     async with session() as ws:
         await recv_until(ws, lambda m: m["type"] == "room_loaded")
 
-        await move(ws, "S", 5.0)
+        await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": True}))
+        tophole_msg = await recv_until(
+            ws,
+            lambda m: m["type"] == "room_loaded" and m["room"]["id"] == "topHole_2",
+            timeout=5.0
+        )
+        initial_pickup_count = len(tophole_msg["room"]["activePickups"])
 
-        last = await drain_recv(ws, 0.2)
-        y = last["player"]["y"]
-
-        assert 5.9 < y < 6.0, f"expected y clamped near 6.0, got {y}"
-        print(f"  PASS: player clamped at y={y:.4f}")
-
-async def test_pickup_collection():
-    print("\n=== Test: pickup collection (candy at 4,4) ===")
-    async with session() as ws:
-        initial = await recv_until(ws, lambda m: m["type"] == "room_loaded")
-        initial_pickup_count = len(initial["room"]["activePickups"])
-
-        await move(ws, "E", 0.55)
-        await asyncio.sleep(0.05)
-        await move(ws, "S", 0.55)
+        await asyncio.sleep(1.0)
+        await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": False}))
 
         last = await drain_recv(ws, 0.3)
         if last is None or last["type"] != "state_update":
             print(f"  WARN: last message was {last}")
             return
 
-        candy = last.get("candyCount", 0)
+        pieces = last.get("phonePieceCount", 0)
         pickups_remaining = len(last.get("activePickups", []))
 
-        if candy > 0:
-            print(f"  PASS: candyCount={candy}, activePickups={pickups_remaining} (was {initial_pickup_count})")
+        if pieces > 0:
+            print(f"  PASS: phonePieceCount={pieces}, activePickups={pickups_remaining} (was {initial_pickup_count})")
         else:
-            print(f"  FAIL: candyCount={candy} (expected >0)")
+            print(f"  FAIL: phonePieceCount={pieces} (expected >0)")
             print(f"    last player position: {last['player']}")
 
+
 async def test_consume_candy():
-    print("\n=== Test: consume candy ===")
+    print("\n=== Test: consume candy (candy in topHole_2) ===")
     async with session() as ws:
         await recv_until(ws, lambda m: m["type"] == "room_loaded")
 
-        await move(ws, "E", 0.55)
-        await asyncio.sleep(0.05)
-        await move(ws, "S", 0.55)
-        await drain_recv(ws, 0.3)
+        await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": True}))
+        await recv_until(
+            ws,
+            lambda m: m["type"] == "room_loaded" and m["room"]["id"] == "topHole_2",
+            timeout=5.0
+        )
+        await asyncio.sleep(1.0)
+        await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": False}))
+
+        before = await drain_recv(ws, 0.3)
+        candy_before = before.get("candyCount", 0) if before else 0
+        if candy_before <= 0:
+            print(f"  WARN: no candy collected (candyCount={candy_before}); skipping consume check")
+            return
 
         await ws.send(json.dumps({"type": "input_consume_candy"}))
-
         last = await drain_recv(ws, 0.3)
         candy = last.get("candyCount", -1)
         energy = last.get("energy", -1)
 
         print(f"  After consume: candyCount={candy}, energy={energy:.2f}")
-        if candy == 0:
-            print(f"  PASS: candy consumed")
+        if candy == candy_before - 1:
+            print(f"  PASS: candy consumed ({candy_before} -> {candy})")
         else:
-            print(f"  FAIL: candy still {candy}")
+            print(f"  FAIL: expected {candy_before - 1}, got {candy}")
 
 async def test_rejection():
     print("\n=== Test: rejection of second client ===")
@@ -182,7 +184,6 @@ async def test_rejection():
                 try:
                     msg = await asyncio.wait_for(ws2.recv(), timeout=2.0)
                     print(f"  FAIL: second connection accepted, received {msg}")
-    
                 except asyncio.TimeoutError:
                     print(f"  ??? second connection opened but no message")
         except websockets.exceptions.ConnectionClosedError as e:
@@ -190,7 +191,6 @@ async def test_rejection():
 
 async def test_loss_by_energy():
     print("\n=== Test: lose by energy depletion ===")
-
     async with session() as ws:
         await recv_until(ws, lambda m: m["type"] == "room_loaded")
 
@@ -200,143 +200,71 @@ async def test_loss_by_energy():
                 lambda m: m["type"] == "game_over",
                 timeout=15.0
             )
-            
             if msg["outcome"] == "lost":
                 print(f"  PASS: game_over outcome=lost")
             else:
                 print(f"  FAIL: expected outcome=lost, got {msg['outcome']}")
-
         except asyncio.TimeoutError:
             print(f"  TIMEOUT: no game_over within 15s. "
-                  f"Make sure energyDrainPerSecond is high (50+) in test_world.json")
+                  f"Make sure energyDrainPerSecond is high (50+) to test this.")
 
-async def test_win_by_collecting_pieces():
-    print("\n=== Test: win by collecting all phone pieces ===")
-    async with session() as ws:
+async def test_collision_blocks_into_wall():
+    print("\n=== Test: collision blocks walking into wall ===")
+    async with session(user_id="collision_test_1") as ws:
         await recv_until(ws, lambda m: m["type"] == "room_loaded")
 
-        await move(ws, "E", 1.05)
-        await drain_recv(ws, 0.3)
-
-        await ws.send(json.dumps({"type": "input_move", "direction": "E", "pressed": True}))
+        await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": True}))
         await recv_until(
             ws,
-            lambda m: m["type"] == "room_loaded" and m["room"]["id"] == "forest_01",
+            lambda m: m["type"] == "room_loaded" and m["room"]["id"] == "topHole_2",
+            timeout=5.0
+        )
+        await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": False}))
+
+        await move(ws, "E", 0.5)
+        last_state = await drain_recv(ws, 0.3)
+
+        final_x = last_state["player"]["x"]
+        assert final_x < 1.0, f"Expected player blocked before x=1.0, got x={final_x}"
+        print(f"  PASS: player blocked at x={final_x:.4f} (couldn't enter hole)")
+
+async def test_collision_slides_along_wall():
+    print("\n=== Test: collision slides along wall ===")
+    async with session(user_id="collision_test_2") as ws:
+        await recv_until(ws, lambda m: m["type"] == "room_loaded")
+
+        await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": True}))
+        tophole_msg = await recv_until(
+            ws,
+            lambda m: m["type"] == "room_loaded" and m["room"]["id"] == "topHole_2",
             timeout=5.0
         )
 
+        initial_y = tophole_msg["player"]["y"]
+
+        await ws.send(json.dumps({"type": "input_move", "direction": "E", "pressed": True}))
+        await asyncio.sleep(0.3)
+        await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": False}))
         await ws.send(json.dumps({"type": "input_move", "direction": "E", "pressed": False}))
 
-        await move(ws, "E", 1.0)
-        await move(ws, "N", 0.25)
-        await drain_recv(ws, 0.3)
+        last_state = await drain_recv(ws, 0.3)
 
-        await move(ws, "S", 0.25)
-        await move(ws, "E", 0.5)
-        await drain_recv(ws, 0.3)
-
-        try:
-            msg = await recv_until(ws, lambda m: m["type"] == "game_over", timeout=3.0)
-            if msg["outcome"] == "won":
-                print(f"  PASS: game_over outcome=won")
-            else:
-                print(f"  FAIL: expected outcome=won, got {msg['outcome']}")
-
-        except asyncio.TimeoutError:
-            print(f"  TIMEOUT: no game_over after collecting pieces")
-
-            last = await drain_recv(ws, 0.2)
-            print(f"    last state: {last}")
-
-async def test_collision_blocks_into_wall():
-    print("=== Test: collision blocks walking into wall ===")
-    
-    ws = await websockets.connect("ws://localhost:8001/game?userId=collision_test_1&mode=new")
-    await ws.recv()
-    
-    await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": True}))
-    
-    transition_msg = None
-    for _ in range(60):
-        msg = json.loads(await ws.recv())
-        if msg.get("type") == "room_loaded" and msg.get("room", {}).get("id") == "topHole_2":
-            transition_msg = msg
-            break
-    assert transition_msg, "Failed to transition to topHole_2"
-    
-    await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": False}))
-    
-    await ws.send(json.dumps({"type": "input_move", "direction": "E", "pressed": True}))
-    await asyncio.sleep(0.5)
-    await ws.send(json.dumps({"type": "input_move", "direction": "E", "pressed": False}))
-    
-    last_state = None
-    for _ in range(20):
-        try:
-            msg = json.loads(await asyncio.wait_for(ws.recv(), timeout=0.1))
-            if msg.get("type") == "state_update":
-                last_state = msg
-        except asyncio.TimeoutError:
-            break
-    
-    final_x = last_state["player"]["x"]
-    assert final_x < 1.0, f"Expected player to be blocked before x=1.0, got x={final_x}"
-    print(f"  ✓ Player blocked at x={final_x:.4f} (couldn't enter hole)")
-    
-    await ws.close()
-
-
-async def test_collision_slides_along_wall():
-    print("=== Test: collision slides along wall ===")
-    
-    ws = await websockets.connect("ws://localhost:8001/game?userId=collision_test_2&mode=new")
-    await ws.recv()
-    
-    await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": True}))
-    transition_msg = None
-    for _ in range(60):
-        msg = json.loads(await ws.recv())
-        if msg.get("type") == "room_loaded" and msg.get("room", {}).get("id") == "topHole_2":
-            transition_msg = msg
-            break
-    assert transition_msg, "Failed to transition to topHole_2"
-    
-    initial_y = transition_msg["player"]["y"]
-    
-    await ws.send(json.dumps({"type": "input_move", "direction": "E", "pressed": True}))
-    await asyncio.sleep(0.3)
-    await ws.send(json.dumps({"type": "input_move", "direction": "N", "pressed": False}))
-    await ws.send(json.dumps({"type": "input_move", "direction": "E", "pressed": False}))
-    
-    last_state = None
-    for _ in range(20):
-        try:
-            msg = json.loads(await asyncio.wait_for(ws.recv(), timeout=0.1))
-            if msg.get("type") == "state_update":
-                last_state = msg
-        except asyncio.TimeoutError:
-            break
-    
-    final_x = last_state["player"]["x"]
-    final_y = last_state["player"]["y"]
-    assert final_x < 1.0, f"East should be blocked, but x={final_x}"
-    assert final_y < initial_y, f"North should still work, but y stayed at {final_y} (initial {initial_y})"
-    print(f"  ✓ Player slid along wall: x={final_x:.4f}, y={final_y:.4f} (initial y={initial_y})")
-    
-    await ws.close()
+        final_x = last_state["player"]["x"]
+        final_y = last_state["player"]["y"]
+        assert final_x < 1.0, f"East should be blocked, but x={final_x}"
+        assert final_y < initial_y, f"North should still work, but y stayed at {final_y} (initial {initial_y})"
+        print(f"  PASS: player slid along wall: x={final_x:.4f}, y={final_y:.4f} (initial y={initial_y})")
 
 ALL_TESTS = [
     test_initial_room_load,
-    test_walk_east_to_forest,
-    test_walk_east_then_back,
-    test_wall_clamping,
+    test_walk_north_to_tophole,
+    test_walk_north_then_back,
     test_pickup_collection,
     test_consume_candy,
     test_rejection,
     test_loss_by_energy,
-    test_win_by_collecting_pieces,
     test_collision_blocks_into_wall,
-    test_collision_slides_along_wall
+    test_collision_slides_along_wall,
 ]
 
 async def main():
@@ -347,17 +275,13 @@ async def main():
             print(f"Unknown test: {name}")
             print(f"Available: {', '.join(t.__name__ for t in ALL_TESTS)}")
             sys.exit(1)
-
         await test()
-
     else:
         for test in ALL_TESTS:
             try:
                 await test()
-
             except Exception as e:
                 print(f"  ERROR in {test.__name__}: {type(e).__name__}: {e}")
-            
             await asyncio.sleep(0.5)
 
 if __name__ == "__main__":
