@@ -12,7 +12,7 @@ namespace {
 
 const std::string AUTH_HOST = []{
     const char *env_auth_host = std::getenv("AUTH_HOST");
-    return env_auth_host ? std::string(env_auth_host) : "auth_service";
+    return env_auth_host ? std::string(env_auth_host) : "auth-service";
 }();
 
 const int AUTH_PORT = []{
