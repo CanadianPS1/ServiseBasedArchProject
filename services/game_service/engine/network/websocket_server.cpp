@@ -33,7 +33,7 @@ static std::unordered_map<std::string, std::string> parse_query_string(
 }
 
 WebsocketServer::WebsocketServer(std::uint16_t port, InputQueue& input_queue) 
-    : _server(port), _input_queue(input_queue)
+    : _server(port, "0.0.0.0"), _input_queue(input_queue)
 {}
 
 void WebsocketServer::run() {

@@ -6,6 +6,8 @@
 #include <spdlog/spdlog.h>
 #include <nlohmann/json.hpp>
 
+#include "engine/save/save_event.hpp"
+#include "engine/util/concurrent_queue.hpp"
 #include "engine/util/visitor.hpp"
 #include "engine/save/save_client.hpp"
 #include "engine/state/game_state.hpp"
@@ -52,19 +54,25 @@ void handle_disconnect(const DisconnectEvent& disconnect_event, std::optional<Ga
     game_state.reset();
 }
 
-void handle_game_event(const GameEvent& game_event, const World& world, std::optional<GameState>& game_state) {
+void handle_game_event(
+    const GameEvent& game_event,
+    const World& world,
+    std::optional<GameState>& game_state,
+    SaveEventQueue& save_queue
+) {
     if(!game_state.has_value()) {
         return;
     }
 
-    dispatch_game_event(*game_state, world, game_event.payload);
+    dispatch_game_event(*game_state, world, save_queue, game_event.payload);
 }
 
 void tick(
     GameState& game_state,
     const World& world,
     double dt,
-    OutputQueue& output_queue
+    OutputQueue& output_queue,
+    SaveEventQueue& save_queue
 ) {
     if(!game_state.is_playing()) {
         return;
@@ -72,13 +80,13 @@ void tick(
     
     apply_movement_event(game_state, dt);
 
-    if(handle_exit_transitions(game_state, world, output_queue)) {
+    if(handle_exit_transitions(game_state, world, output_queue, save_queue)) {
         return; 
     }
 
-    handle_pickup_collection(game_state, world);
+    handle_pickup_collection(game_state, world, save_queue);
     drain_energy(game_state, world, dt);
-    check_win_lose(game_state, world);
+    check_win_lose(game_state, world, save_queue);
 
     if(!game_state.is_playing()) {
         output_queue.push(build_game_over(game_state));
@@ -91,7 +99,8 @@ void tick(
 void run_game_loop(
     const World& world,
     InputQueue& input_queue,
-    OutputQueue& output_queue
+    OutputQueue& output_queue,
+    SaveEventQueue& save_queue
 ) {
     using Clock = std::chrono::steady_clock;
     using std::chrono::duration;
@@ -118,14 +127,14 @@ void run_game_loop(
         while(accumulated_time >= TICK_INTERVAL_SEC) {
             while(auto event = input_queue.try_pop()) {
                 std::visit(Overloaded {
-                    [&](const ConnectEvent& connect_event) { handle_connect(connect_event, world, game_state, output_queue); },
+                    [&](const ConnectEvent& connect_event)       { handle_connect(connect_event, world, game_state, output_queue); },
                     [&](const DisconnectEvent& disconnect_event) { handle_disconnect(disconnect_event, game_state); },
-                    [&](const GameEvent& game_event) { handle_game_event(game_event, world, game_state); }
-                    }, *event);
+                    [&](const GameEvent& game_event)             { handle_game_event(game_event, world, game_state, save_queue); }
+                }, *event);
             }
 
             if(game_state.has_value()) {
-                tick(*game_state, world, TICK_INTERVAL_SEC, output_queue);
+                tick(*game_state, world, TICK_INTERVAL_SEC, output_queue, save_queue);
             }
 
             accumulated_time -= TICK_INTERVAL_SEC;

@@ -64,6 +64,8 @@ bool SavePublisher::publish(const std::string& msg_body) {
         return false;
     }
 
+    spdlog::info("Publishing message: {} to amqp server {}:{}!", msg_body, _host, _port);
+
     try {
         auto msg = AmqpClient::BasicMessage::Create(msg_body);
         msg->ContentType("application/json");
@@ -86,3 +88,4 @@ bool SavePublisher::publish(const std::string& msg_body) {
 }
 
 } // namespace et_game
+

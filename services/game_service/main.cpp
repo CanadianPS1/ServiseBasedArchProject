@@ -1,26 +1,40 @@
 #include <string>
 #include <thread>
+#include <cstdlib>
 #include <exception>
+
 #include <spdlog/spdlog.h>
 
 #include "engine/session/game_loop.hpp"
 #include "engine/world/world_loader.hpp"
+#include "engine/save/save_publisher.hpp"
+#include "engine/save/publisher_thread.hpp"
 #include "engine/network/sender_thread.hpp"
 #include "engine/util/concurrent_queue.hpp"
 #include "engine/network/websocket_server.hpp"
 
-int main() {
-    /* TODO: Restore once done testing
-    const char *world_env_path = std::getenv("WORLD_JSON_PATH");
-    const std::string world_path = world_env_path
-        ? std::string(world_env_path)
-        : "../shared/static/world.json";
-    */
+namespace detail {
 
-    const std::string world_path = "../shared/static/test_world.json";
-    spdlog::set_level(spdlog::level::debug);
-    spdlog::info("Starting ET Game Service...");
-    spdlog::info("Loading world from '{}'...", world_path);
+std::string env_var_or(const char *env_var_name, const std::string& default_fallback) {
+    const char *value = std::getenv(env_var_name);
+    return value ? std::string(value) : default_fallback;
+}
+
+std::uint16_t env_var_or(const char *env_var_name, const std::uint16_t default_fallback) {
+    char *value = std::getenv(env_var_name);
+    return value ? static_cast<std::uint16_t>(std::atoi(value)) : default_fallback;
+}
+
+} // namespace detail
+
+int main() {
+    const std::string world_path = detail::env_var_or("WORLD_JSON_PATH", "../shared/static/world.json");
+
+    const std::string   rabbitmq_host = detail::env_var_or("RABBITMQ_HOST", "0.0.0.0");
+    const std::uint16_t rabbitmq_port = detail::env_var_or("RABBITMQ_PORT", 5672);
+    const std::string   rabbitmq_user = detail::env_var_or("RABBITMQ_USER", "guest");
+    const std::string   rabbitmq_pass = detail::env_var_or("RABBITMQ_PASSWORD", "guest");
+    const char *SAVES_QUEUE_NAME = "saves";
 
     et_game::World world{};
     try {
@@ -37,7 +51,15 @@ int main() {
 
     et_game::InputQueue input_queue{};
     et_game::OutputQueue output_queue{};
+    et_game::SaveEventQueue save_queue{};
+
     et_game::WebsocketServer websocket_server(8001, input_queue);
+
+    et_game::SavePublisher save_publisher(
+        rabbitmq_host, rabbitmq_port,
+        rabbitmq_user, rabbitmq_pass,
+        SAVES_QUEUE_NAME
+    );
 
     std::thread websocket_thread([&websocket_server]() {
         websocket_server.run();
@@ -49,12 +71,19 @@ int main() {
         et_game::run_sender_thread(websocket_server, output_queue);
     });
 
+    std::thread publisher_thread([&save_publisher, &save_queue]() {
+        et_game::run_publisher_thread(save_publisher, save_queue);
+    });
+
     spdlog::info("Sender thread running!");
     spdlog::info("Starting game loop...");
     
-    et_game::run_game_loop(world, input_queue, output_queue);
+    et_game::run_game_loop(world, input_queue, output_queue, save_queue);
 
     output_queue.shutdown();
+    save_queue.shutdown();
+
+    publisher_thread.join();
     sender_thread.join();
     websocket_thread.join();
 

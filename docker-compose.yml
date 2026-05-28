@@ -1,9 +1,5 @@
-# This is for testing purposes only.
-
-version: '3.9'
 
 services:
-
   mongo:
     image: mongo:latest
     container_name: et-mongo
@@ -12,6 +8,11 @@ services:
       - "27017:27017"
     environment:
       MONGO_INITDB_DATABASE: et_game
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -20,6 +21,11 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   auth-service:
     build: ./services/auth_service
@@ -28,11 +34,35 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - mongo
-      - rabbitmq
-
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     env_file:
       - ./services/auth_service/.env
+
+  game-service:
+    build: ./services/game_service
+    container_name: et-game-service
+    restart: always
+    ports:
+      - "8001:8001"
+    environment:
+      AUTH_HOST: auth-service
+      AUTH_PORT: 8000
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      WORLD_JSON_PATH: /app/shared/static/world.json
+    volumes:
+      - ./services/shared:/app/shared:ro
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+
   gui-service:
     build: ./services/gui_service
     container_name: et-gui-service
@@ -43,7 +73,6 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix
     devices:
       - /dev/dri:/dev/dri
-
     deploy:
       resources:
         reservations:
@@ -51,11 +80,8 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-
     stdin_open: true
     tty: true
     restart: always
-    ports:
-      - "8002:8002"
     depends_on:
-      - auth-service
+      - game-service

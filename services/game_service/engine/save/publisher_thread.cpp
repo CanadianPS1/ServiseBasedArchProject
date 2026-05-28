@@ -66,3 +66,4 @@ void run_publisher_thread(SavePublisher &save_publisher, SaveEventQueue &save_qu
 }
 
 } // namespace et_game
+
